@@ -14,6 +14,9 @@ class ParcelBase(Enum):
     def __lt__(self, other):
         ...
 
+    def __eq__(self, other):
+        ...
+
 
 class ParcelDelivery(ParcelBase):
     A = 1

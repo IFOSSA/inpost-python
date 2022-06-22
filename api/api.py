@@ -2,7 +2,7 @@ from aiohttp import ClientSession
 from json import dumps
 from static.endpoints import login
 from static.headers import appjson
-from static.exceptions import NotAuthenticatedError
+from static.exceptions import NotAuthenticatedError, NotImplementedError
 
 
 class Inpost:
@@ -26,4 +26,25 @@ class Inpost:
             token = await resp.json()
             self.token = token['token']
         else:
+            raise NotAuthenticatedError(await resp.text())
+
+    async def disconnect(self):
+        await self.sess.close()
+
+    async def my_parcels(self):
+        if not self.auth:
             raise NotAuthenticatedError
+
+        raise NotImplementedError
+
+    async def send_parcel(self):
+        if not self.auth:
+            raise NotAuthenticatedError
+
+        raise NotImplementedError
+
+    async def new_parcel(self):
+        if not self.auth:
+            raise NotAuthenticatedError
+
+        raise NotImplementedError

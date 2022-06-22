@@ -6,3 +6,8 @@ class SomeParcelError(Exception):
 # ----------------- API ----------------- #
 class NotAuthenticatedError(Exception):
     pass
+
+
+# ----------------- Other ----------------- #
+class NotImplementedError(Exception):
+    pass
