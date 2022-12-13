@@ -50,7 +50,7 @@ class ParcelAdditionalInsurance(ParcelBase):
 
 
 class ParcelForm(ParcelBase):
-    OUTCOMING = 1
+    OUTGOING = 1
     INCOMING = 2
 
 
