@@ -1,6 +1,9 @@
-login: str = 'https://manager.paczkomaty.pl/v1/api/auth/login'
-logout: str = 'https://manager.paczkomaty.pl/v1/api/auth/logout'
+login: str = 'https://api-inmobile-pl.easypack24.net/v1/authenticate'
+send_sms_code: str = 'https://api-inmobile-pl.easypack24.net/v1/sendSMSCode/'  # get
+confirm_sms_code: str = 'https://api-inmobile-pl.easypack24.net/v1/confirmSMSCode'  # post
+logout: str = 'https://api-inmobile-pl.easypack24.net/v1/logout'  # post
+
 # \/ Secured by JWT \/
 
-user_infos: str = 'https://manager.paczkomaty.pl/v1/api/auth/user'
-get_parcels: str = 'https://manager.paczkomaty.pl/v1/api/parcels'
+get_parcel: str = 'https://api-inmobile-pl.easypack24.net/v1/parcel'  # get
+
