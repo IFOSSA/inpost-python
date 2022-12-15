@@ -18,6 +18,17 @@ class NotAuthenticatedError(Exception):
         return self.reason
 
 
+class ReAuthenticationError(Exception):
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.msg: str = Optional[str]
+        self.reason: Any = Optional[Any]
+
+    @property
+    def stack(self):
+        return self.reason
+
+
 class PhoneNumberError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
