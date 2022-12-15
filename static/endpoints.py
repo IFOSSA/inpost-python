@@ -5,5 +5,5 @@ logout: str = 'https://api-inmobile-pl.easypack24.net/v1/logout'  # post
 
 # \/ Secured by JWT \/
 
-get_parcel: str = 'https://api-inmobile-pl.easypack24.net/v1/parcel'  # get
-
+refresh_token: str = 'https://api-inmobile-pl.easypack24.net/v1/authenticate'  # post
+parcels: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/tracked'  # get
