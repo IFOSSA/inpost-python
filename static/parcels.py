@@ -1,27 +1,28 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
 from arrow import get, arrow
 
 
 class Parcel:
     def __init__(self, parcel_data: dict):
         self.shipment_number: str = parcel_data['shipmentNumber']
-        self.shipment_type: str = parcel_data['shipmentType']
+        self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data['shipmentType']]
         self._open_code: Optional[str] = parcel_data['openCode'] if 'openCode' in parcel_data else None
         self._qr_code: Optional[str] = parcel_data['qrCode'] if 'qrCode' in parcel_data else None
         self.stored_date: Optional[arrow] = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
         self.pickup_date: Optional[arrow] = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
-        self.parcel_size: str = parcel_data['parcelSize']
+        self.parcel_size: Union[ParcelLockerSize, ParcelCarrierSize] = ParcelLockerSize[parcel_data['parcelSize']] \
+            if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'])
         self.sender: Sender = Sender(sender_data=parcel_data['sender'])
         self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint'])
         self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
         self.operations: Operations = Operations(operations_data=parcel_data['operations'])
-        self.status: str = parcel_data['status']
+        self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
         self.event_log: List[EventLog] = [EventLog(eventlog_data=event) for event in parcel_data['eventLog']]
         self.avizo_transaction_status: str = parcel_data['avizoTransactionStatus']
         self.shared_to: List[SharedTo] = [SharedTo(sharedto_data=person) for person in parcel_data['sharedTo']]
-        self.ownership_status: str = parcel_data['ownershipStatus']
+        self.ownership_status: ParcelOwnership = ParcelOwnership[parcel_data['ownershipStatus']]
 
     def __str__(self):
         return f"Shipment number: {self.shipment_number}\n" \
@@ -59,7 +60,7 @@ class PickupPoint:
         self.building_number: str = pickuppoint_data['addressDetails']['buildingNumber']
         self.virtual: int = pickuppoint_data['virtual']
         self.point_type: str = pickuppoint_data['pointType']
-        self.type: List[str] = pickuppoint_data['type']
+        self.type: List[ParcelDeliveryType] = [ParcelDeliveryType[data] for data in pickuppoint_data['type']]
         self.location_round_the_clock: bool = pickuppoint_data['location247']
         self.doubled: bool = pickuppoint_data['doubled']
         self.image_url: str = pickuppoint_data['imageUrl']
@@ -68,6 +69,10 @@ class PickupPoint:
 
     def __str__(self):
         return self.name
+
+    @property
+    def location(self) -> Tuple[float, float]:
+        return self.latitude, self.longitude
 
 
 class Operations:
@@ -90,7 +95,7 @@ class Operations:
 class EventLog:
     def __init__(self, eventlog_data: dict):
         self.type: str = eventlog_data['type']
-        self.name: str = eventlog_data['name']
+        self.name: ParcelStatus = ParcelStatus[eventlog_data['name']]
         self.date: arrow = get(eventlog_data['date'])
 
 
@@ -117,27 +122,28 @@ class ParcelBase(Enum):
 
 
 class ParcelCarrierSize(ParcelBase):
-    A = 1
-    B = 2
-    C = 3
-    D = 4
+    A = '8x38x64'
+    B = '19x38x64'
+    C = '41x38x64'
+    D = '50x50x80'
 
 
 class ParcelLockerSize(ParcelBase):
-    A = 1
-    B = 2
-    C = 3
+    A = '8x38x64'
+    B = '19x38x64'
+    C = '41x38x64'
 
 
 class ParcelDeliveryType(ParcelBase):
-    PARCELLOCKER = 1
-    CARRIER = 2
+    parcel_locker = 'Paczkomat'
+    carrier = 'Kurier'
+    parcel_point = 'PaczkoPunkt'
 
 
 class ParcelShipmentType(ParcelBase):
-    PARCELLOCKER = 1
-    CARRIER = 2
-    PARCELPOINT = 3
+    parcel = 'Paczkomat'
+    carrier = 'Kurier'
+    parcel_point = 'PaczkoPunkt'
 
 
 class ParcelAdditionalInsurance(ParcelBase):
@@ -153,30 +159,22 @@ class ParcelForm(ParcelBase):
 
 
 class ParcelStatus(ParcelBase):
-    CREATED = 1
-    CUSTOMERSTORED = 2
-    CUSTOMERSENT = 3
-    SENT = 4
-    INTRANSIT = 5
-    RETURNEDTOSORTINGCENTER = 6
-    DELIVEREDTOSORTINGCENTER = 7
-    RETURNEDTOSENDER = 8
-    PREPARED = 9
-    CUSTOMERDELIVERING = 10
-    STORED = 11
-    EXPIRED = 12
-    AVIZO = 13
-    RETURNEDTOAGENCY = 14
-    RETUNEDTOAGENCY = 15
-    DELIVEREDTOAGENCY = 16
-    CANCELLED = 17
-    LABELEXPIRED = 18
-    LABELDESTROYED = 19
-    MISSING = 20
-    CLAIMED = 21
-    NOTDELIVERED = 22
-    OVERSIZED = 23
-    DELIVERED = 24
+    CONFIRMED = 'Potwierdzona'
+    COLLECTED_FROM_SENDER = 'Odebrana od nadawcy'
+    DISPATCHED_BY_SENDER_TO_POK = 'Nadana w PaczkoPunkcie'
+    DISPATCHED_BY_SENDER = 'Nadana w paczkomacie'
+    TAKEN_BY_COURIER = 'Odebrana przez Kuriera'
+    TAKEN_BY_COURIER_FROM_POK = 'Odebrana z PaczkoPunktu nadawczego'
+    ADOPTED_AT_SOURCE_BRANCH = 'Przyjęta w oddziale'
+    SENT_FROM_SOURCE_BRANCH = 'Wysłana z oddziału'
+    OUT_FOR_DELIVERY = 'Wydana do doręczenia'
+    READY_TO_PICKUP = 'Gotowa do odbioru'
+    DELIVERED = 'Doręczona'
+
+
+class ParcelOwnership(ParcelBase):
+    FRIEND = 'Zaprzyjaźniona'
+    OWN = 'Własna'
 
 
 class ParcelServiceName(ParcelBase):
