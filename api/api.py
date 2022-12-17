@@ -26,9 +26,9 @@ class Inpost:
             if phone.status == 200:
                 return True
             else:
-                raise PhoneNumberError(phone)
+                raise PhoneNumberError(reason=phone)
 
-    async def confirm_sms_code(self, sms_code: str):
+    async def confirm_sms_code(self, sms_code: str) -> Optional[bool]:
         async with await self.sess.post(url=confirm_sms_code,
                                         headers=appjson,
                                         json={
@@ -45,9 +45,7 @@ class Inpost:
             else:
                 raise SmsCodeConfirmationError(reason=confirmation)
 
-        return False
-
-    async def refresh_token(self):
+    async def refresh_token(self) -> Optional[bool]:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Authentication token missing')
 
@@ -70,21 +68,27 @@ class Inpost:
             else:
                 raise RefreshTokenException(reason=confirmation)
 
-    async def logout(self):
-        if self.auth_token is not None:
-            async with await self.sess.post(url=logout,
-                                            headers={'Authorization': self.auth_token}) as resp:
-                if resp.status == 200:
-                    print(await resp.text())
-                    self.auth_token = None
-                else:
-                    raise SomeAPIError(reason=resp)
-        else:
+    async def logout(self) -> Optional[bool]:
+        if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
-    async def disconnect(self):
-        await self.logout()
-        await self.sess.close()
+        async with await self.sess.post(url=logout,
+                                        headers={'Authorization': self.auth_token}) as resp:
+            if resp.status == 200:
+                self.phone_number = None
+                self.refr_token = None
+                self.auth_token = None
+                self.sms_code = None
+                return True
+            else:
+                raise SomeAPIError(reason=resp)
+
+    async def disconnect(self) -> bool:
+        if await self.logout():
+            await self.sess.close()
+            return True
+
+        return False
 
     async def get_parcel(self, shipment_number: Union[int, str], parse=False) -> Union[dict, Parcel]:
         if not self.auth_token:
@@ -107,37 +111,8 @@ class Inpost:
                                        headers={'Authorization': self.auth_token},
                                        ) as resp:
             if resp.status == 200:
-                x = await resp.json()
                 return await resp.json() if not as_list else [Parcel(parcel_data=data) for data in
                                                               (await resp.json())['parcels']]
 
             else:
                 raise SomeAPIError(reason=resp)
-
-    # async def send_parcel(self,
-    #                       recipient_email: str,
-    #                       recipient_phone_number: str,
-    #                       parcel_type: ParcelDeliveryType,
-    #                       parcel_size: Union[ParcelLockerSize, ParcelCarrierSize],  # only for parcel locker
-    #                       parcel_locker_code: Optional[str],
-    #                       shipment_method: ParcelShipmentType,
-    #                       referral_number: Optional[str],
-    #                       name: str,
-    #                       bussines_name: str,
-    #                       zip_code: str,
-    #                       city: str,
-    #                       street: str,
-    #                       building_number: int,
-    #                       apartment_numer: int,
-    #                       charge_value: Optional[int],
-    #                       end_of_week_collection: Optional[bool]):
-    #     if not self.auth_token:
-    #         raise NotAuthenticatedError
-    #
-    #     raise NotImplementedError
-    #
-    # async def new_parcel(self):
-    #     if not self.auth_token:
-    #         raise NotAuthenticatedError
-    #
-    #     raise NotImplementedError
