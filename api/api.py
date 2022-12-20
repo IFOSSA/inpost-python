@@ -1,5 +1,3 @@
-from typing import Union, List
-
 from aiohttp import ClientSession
 from static.endpoints import *
 from static.headers import appjson
@@ -116,8 +114,41 @@ class Inpost:
                                        headers={'Authorization': self.auth_token},
                                        ) as resp:
             if resp.status == 200:
-                return await resp.json() if not parse else [Parcel(parcel_data=data) for data in
-                                                            (await resp.json())['parcels']]
+                _parcels = (await resp.json())['parcels']
+
+                if status is not None:
+                    if isinstance(status, ParcelStatus):
+                        status = [status]
+
+                    _parcels = (_parcel for _parcel in _parcels if ParcelStatus[_parcel['status']] in status)
+
+                if pickup_point is not None:
+                    if isinstance(pickup_point, str):
+                        pickup_point = [pickup_point]
+
+                    _parcels = (_parcel for _parcel in _parcels if _parcel['pickUpPoint']['name'] in pickup_point)
+
+                if shipment_type is not None:
+                    if isinstance(shipment_type, ParcelShipmentType):
+                        shipment_type = [shipment_type]
+
+                    _parcels = (_parcel for _parcel in _parcels if
+                                ParcelShipmentType[_parcel['shipmentType']] in shipment_type)
+
+                if parcel_size is not None:
+                    if isinstance(parcel_size, ParcelCarrierSize):
+                        parcel_size = [parcel_size]
+
+                        _parcels = (_parcel for _parcel in _parcels if
+                                    ParcelCarrierSize[_parcel['parcelSize']] in parcel_size)
+
+                    if isinstance(parcel_size, ParcelLockerSize):
+                        parcel_size = [parcel_size]
+
+                        _parcels = (_parcel for _parcel in _parcels if
+                                    ParcelLockerSize[_parcel['parcelSize']] in parcel_size)
+
+                return _parcels if not parse else [Parcel(parcel_data=data) for data in _parcels]
 
             else:
                 raise SomeAPIError(reason=resp)
