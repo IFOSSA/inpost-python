@@ -4,7 +4,7 @@ from aiohttp import ClientSession
 from static.endpoints import *
 from static.headers import appjson
 from static.exceptions import *
-from static.parcels import Parcel
+from static.parcels import *
 
 
 class Inpost:
@@ -103,7 +103,12 @@ class Inpost:
             else:
                 raise SomeAPIError(reason=resp)
 
-    async def get_parcels(self, as_list=False) -> Union[dict, List[Parcel]]:
+    async def get_parcels(self,
+                          status: Optional[Union[ParcelStatus, List[ParcelStatus]]] = None,
+                          pickup_point: Optional[Union[str, List[str]]] = None,
+                          shipment_type: Optional[Union[ParcelShipmentType, List[ParcelShipmentType]]] = None,
+                          parcel_size: Optional[Union[ParcelLockerSize, ParcelCarrierSize]] = None,
+                          parse: bool = False) -> Union[dict, List[Parcel]]:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
@@ -111,8 +116,8 @@ class Inpost:
                                        headers={'Authorization': self.auth_token},
                                        ) as resp:
             if resp.status == 200:
-                return await resp.json() if not as_list else [Parcel(parcel_data=data) for data in
-                                                              (await resp.json())['parcels']]
+                return await resp.json() if not parse else [Parcel(parcel_data=data) for data in
+                                                            (await resp.json())['parcels']]
 
             else:
                 raise SomeAPIError(reason=resp)
