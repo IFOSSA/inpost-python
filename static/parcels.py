@@ -1,5 +1,8 @@
 from enum import Enum
+from io import BytesIO
 from typing import List, Optional, Tuple, Union
+
+import qrcode
 from arrow import get, arrow
 
 
@@ -8,7 +11,7 @@ class Parcel:
         self.shipment_number: str = parcel_data['shipmentNumber']
         self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data['shipmentType']]
         self._open_code: Optional[str] = parcel_data['openCode'] if 'openCode' in parcel_data else None
-        self._qr_code: Optional[str] = parcel_data['qrCode'] if 'qrCode' in parcel_data else None
+        self._qr_code: Optional[QRCode] = QRCode(parcel_data['qrCode']) if 'qrCode' in parcel_data else None
         self.stored_date: Optional[arrow] = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
         self.pickup_date: Optional[arrow] = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
         self.parcel_size: Union[ParcelLockerSize, ParcelCarrierSize] = ParcelLockerSize[parcel_data['parcelSize']] \
@@ -31,6 +34,10 @@ class Parcel:
                f"Status: {self.status}\n" \
                f"Pickup point: {self.pickup_point}\n" \
                f"Sender: {str(self.sender)}"
+
+    @property
+    def generate_qr_image(self):
+        return self._qr_code.qr_image
 
 
 class Receiver:
@@ -117,6 +124,30 @@ class SharedTo:
         self.phone_number = sharedto_data['phoneNumber']
 
 
+class QRCode:
+    def __init__(self, qrcode_data: str):
+        self._qr_code = qrcode_data
+
+    @property
+    def qr_image(self) -> BytesIO:
+        qr = qrcode.QRCode(
+            version=3,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=20,
+            border=4,
+            mask_pattern=5
+        )
+
+        qr.add_data(self._qr_code)
+        qr.make(fit=False)
+        img1 = qr.make_image(fill_color="black", back_color="white")
+        bio = BytesIO()
+        bio.name = 'qr.png'
+        img1.save(bio, 'PNG')
+        bio.seek(0)
+        return bio
+
+
 class ParcelBase(Enum):
     def __gt__(self, other):
         ...
@@ -131,7 +162,10 @@ class ParcelBase(Enum):
         ...
 
     def __eq__(self, other):
-        return self.name == other.name
+        if isinstance(other, ParcelBase):
+            return self.name == other.name
+
+        return False
 
 
 class ParcelCarrierSize(ParcelBase):
