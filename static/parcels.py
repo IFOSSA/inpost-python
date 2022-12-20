@@ -16,6 +16,8 @@ class Parcel:
         self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'])
         self.sender: Sender = Sender(sender_data=parcel_data['sender'])
         self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint'])
+        self.multi_compartment: Optional[MultiCompartment] = MultiCompartment(parcel_data['multiCompartment']) \
+            if 'multiCompartment' in parcel_data else None
         self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
         self.operations: Operations = Operations(operations_data=parcel_data['operations'])
         self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
@@ -75,6 +77,15 @@ class PickupPoint:
         return self.latitude, self.longitude
 
 
+class MultiCompartment:
+    def __init__(self, multicompartment_data):
+        self.uuid = multicompartment_data['uuid']
+        self.shipment_numbers: Optional[List['str']] = multicompartment_data['shipmentNumbers'] \
+            if 'shipmentNumbers' in multicompartment_data else None
+        self.presentation: bool = multicompartment_data['presentation']
+        self.collected: bool = multicompartment_data['collected']
+
+
 class Operations:
     def __init__(self, operations_data):
         self.manual_archive: bool = operations_data['manualArchive']
@@ -101,7 +112,9 @@ class EventLog:
 
 class SharedTo:
     def __init__(self, sharedto_data):
-        ...
+        self.uuid: str = sharedto_data['uuid']
+        self.name: str = sharedto_data['name']
+        self.phone_number = sharedto_data['phoneNumber']
 
 
 class ParcelBase(Enum):
@@ -118,7 +131,7 @@ class ParcelBase(Enum):
         ...
 
     def __eq__(self, other):
-        ...
+        return self.name == other.name
 
 
 class ParcelCarrierSize(ParcelBase):
@@ -166,6 +179,7 @@ class ParcelStatus(ParcelBase):
     TAKEN_BY_COURIER = 'Odebrana przez Kuriera'
     TAKEN_BY_COURIER_FROM_POK = 'Odebrana z PaczkoPunktu nadawczego'
     ADOPTED_AT_SOURCE_BRANCH = 'Przyjęta w oddziale'
+    ADOPTED_AT_SORTING_CENTER = 'Przyjęta w sortowni'
     SENT_FROM_SOURCE_BRANCH = 'Wysłana z oddziału'
     OUT_FOR_DELIVERY = 'Wydana do doręczenia'
     READY_TO_PICKUP = 'Gotowa do odbioru'
