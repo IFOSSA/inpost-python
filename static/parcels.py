@@ -1,9 +1,10 @@
-from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Tuple, Union
 
 import qrcode
 from arrow import get, arrow
+
+from static.statuses import *
 
 
 class Parcel:
@@ -28,6 +29,7 @@ class Parcel:
         self.avizo_transaction_status: str = parcel_data['avizoTransactionStatus']
         self.shared_to: List[SharedTo] = [SharedTo(sharedto_data=person) for person in parcel_data['sharedTo']]
         self.ownership_status: ParcelOwnership = ParcelOwnership[parcel_data['ownershipStatus']]
+        self._compartment_properties: CompartmentProperties | None = None
 
     def __str__(self):
         return f"Shipment number: {self.shipment_number}\n" \
@@ -36,8 +38,52 @@ class Parcel:
                f"Sender: {str(self.sender)}"
 
     @property
+    def open_code(self):
+        return self._open_code
+
+    @property
     def generate_qr_image(self):
         return self._qr_code.qr_image
+
+    @property
+    def compartment_properties(self):
+        return self._compartment_properties
+
+    @compartment_properties.setter
+    def compartment_properties(self, compartmentproperties_data: dict):
+        self._compartment_properties = CompartmentProperties(compartmentproperties_data=compartmentproperties_data)
+
+    @property
+    def compartment_location(self):
+        return self._compartment_properties.location
+
+    @compartment_location.setter
+    def compartment_location(self, location_data):
+        self._compartment_properties.location = location_data
+
+    @property
+    def compartment_status(self):
+        return self._compartment_properties.status
+
+    @compartment_status.setter
+    def compartment_status(self, status):
+        self._compartment_properties.status = status
+
+    @property
+    def compartment_open_data(self):
+        return {
+            'shipmentNumber': self.shipment_number,
+            'openCode': self._open_code,
+            'receiverPhoneNumber': self.receiver.phone_number
+        }
+
+    @property
+    def mocked_location(self):  # TODO[1]: MAKE IT MORE RANDOM
+        return {
+            'latitude': self.pickup_point.latitude,
+            'longitude': self.pickup_point.longitude,
+            'accuracy': 3
+        }
 
 
 class Receiver:
@@ -148,92 +194,41 @@ class QRCode:
         return bio
 
 
-class ParcelBase(Enum):
-    def __gt__(self, other):
-        ...
-
-    def __ge__(self, other):
-        ...
-
-    def __le__(self, other):
-        ...
-
-    def __lt__(self, other):
-        ...
-
-    def __eq__(self, other):
-        if isinstance(other, ParcelBase):
-            return self.name == other.name
-
-        return False
+class CompartmentLocation:
+    def __init__(self, compartmentlocation_data: dict):
+        self.name: str = compartmentlocation_data['compartment']['name']
+        self.side: str = compartmentlocation_data['compartment']['location']['side']
+        self.column: str = compartmentlocation_data['compartment']['location']['column']
+        self.row: str = compartmentlocation_data['compartment']['location']['row']
+        self.open_compartment_waiting_time: int = compartmentlocation_data['openCompartmentWaitingTime']
+        self.action_time: int = compartmentlocation_data['actionTime']
+        self.confirm_action_time: int = compartmentlocation_data['confirmActionTime']
 
 
-class ParcelCarrierSize(ParcelBase):
-    A = '8x38x64'
-    B = '19x38x64'
-    C = '41x38x64'
-    D = '50x50x80'
+class CompartmentProperties:
+    def __init__(self, compartmentproperties_data: dict):
+        self._session_uuid: str = compartmentproperties_data['sessionUuid']
+        self._session_expiration_time: int = compartmentproperties_data['sessionExpirationTime']
+        self._location: CompartmentLocation | None = None
+        self._status: CompartmentActualStatus | None = None
 
+    @property
+    def session_uuid(self):
+        return self._session_uuid
 
-class ParcelLockerSize(ParcelBase):
-    A = '8x38x64'
-    B = '19x38x64'
-    C = '41x38x64'
+    @property
+    def location(self):
+        return self._location
 
+    @location.setter
+    def location(self, location_data: dict):
+        self._location = CompartmentLocation(location_data)
 
-class ParcelDeliveryType(ParcelBase):
-    parcel_locker = 'Paczkomat'
-    carrier = 'Kurier'
-    parcel_point = 'PaczkoPunkt'
+    @property
+    def status(self):
+        return self._status
 
-
-class ParcelShipmentType(ParcelBase):
-    parcel = 'Paczkomat'
-    carrier = 'Kurier'
-    parcel_point = 'PaczkoPunkt'
-
-
-class ParcelAdditionalInsurance(ParcelBase):
-    UNINSURANCED = 1
-    ONE = 2  # UPTO 5000
-    TWO = 3  # UPTO 10000
-    THREE = 4  # UPTO 20000
-
-
-class ParcelForm(ParcelBase):
-    OUTGOING = 1
-    INCOMING = 2
-
-
-class ParcelStatus(ParcelBase):
-    CONFIRMED = 'Potwierdzona'
-    COLLECTED_FROM_SENDER = 'Odebrana od nadawcy'
-    DISPATCHED_BY_SENDER_TO_POK = 'Nadana w PaczkoPunkcie'
-    DISPATCHED_BY_SENDER = 'Nadana w paczkomacie'
-    TAKEN_BY_COURIER = 'Odebrana przez Kuriera'
-    TAKEN_BY_COURIER_FROM_POK = 'Odebrana z PaczkoPunktu nadawczego'
-    ADOPTED_AT_SOURCE_BRANCH = 'Przyjęta w oddziale'
-    ADOPTED_AT_SORTING_CENTER = 'Przyjęta w sortowni'
-    SENT_FROM_SOURCE_BRANCH = 'Wysłana z oddziału'
-    OUT_FOR_DELIVERY = 'Wydana do doręczenia'
-    READY_TO_PICKUP = 'Gotowa do odbioru'
-    DELIVERED = 'Doręczona'
-
-
-class ParcelOwnership(ParcelBase):
-    FRIEND = 'Zaprzyjaźniona'
-    OWN = 'Własna'
-
-
-class ParcelServiceName(ParcelBase):
-    ALLEGRO_PARCEL = 1
-    ALLEGRO_PARCEL_SMART = 2
-    ALLEGRO_LETTER = 3
-    ALLEGRO_COURIER = 4
-    STANDARD = 5
-    STANDARD_PARCEL_SMART = 6
-    PASS_THRU = 7
-    CUSTOMER_SERVICE_POINT = 8
-    REVERSE = 9
-    STANDARD_COURIER = 10
-    REVERSE_RETURN = 11
+    @status.setter
+    def status(self, status_data: str | CompartmentActualStatus):
+        self._status = status_data if isinstance(status_data, CompartmentActualStatus) \
+            else CompartmentActualStatus[status_data]
