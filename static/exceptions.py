@@ -3,7 +3,25 @@ from typing import Optional, Any
 
 
 class SomeParcelError(Exception):
-    pass
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.msg: str = Optional[str]
+        self.reason: Any = Optional[Any]
+
+    @property
+    def stack(self):
+        return self.reason
+
+
+class ParcelTypeError(Exception):
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.msg: str = Optional[str]
+        self.reason: Any = Optional[Any]
+
+    @property
+    def stack(self):
+        return self.reason
 
 
 # ----------------- API ----------------- #
@@ -74,5 +92,12 @@ class SomeAPIError(Exception):
 
 
 # ----------------- Other ----------------- #
-class NotImplementedError(Exception):
-    pass
+class UserLocationError(Exception):
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.msg: str = Optional[str]
+        self.reason: Any = Optional[Any]
+
+    @property
+    def stack(self):
+        return self.reason
