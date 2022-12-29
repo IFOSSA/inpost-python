@@ -1,3 +1,5 @@
+from typing import Generator
+
 from aiohttp import ClientSession
 from static.endpoints import *
 from static.headers import appjson
@@ -12,6 +14,7 @@ class Inpost:
         self.auth_token: str | None = None
         self.refr_token: str | None = None
         self.sess: ClientSession = ClientSession()
+        self.parcel: Parcel | None = None
 
     def __repr__(self):
         return f'Username: {self.phone_number}\nToken: {self.auth_token}'
@@ -102,15 +105,29 @@ class Inpost:
                 raise SomeAPIError(reason=resp)
 
     async def get_parcels(self,
+                          parcel_type: ParcelType = ParcelType.TRACKED,
                           status: Optional[Union[ParcelStatus, List[ParcelStatus]]] = None,
                           pickup_point: Optional[Union[str, List[str]]] = None,
                           shipment_type: Optional[Union[ParcelShipmentType, List[ParcelShipmentType]]] = None,
                           parcel_size: Optional[Union[ParcelLockerSize, ParcelCarrierSize]] = None,
-                          parse: bool = False) -> Union[dict, List[Parcel]]:
+                          parse: bool = False) -> Union[List[dict], Generator[dict], List[Parcel]]:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
-        async with await self.sess.get(url=parcels,
+        if not isinstance(parcel_type, ParcelType):
+            raise ParcelTypeError(reason=f'Unknown parcel type: {parcel_type}')
+
+        match parcel_type:
+            case ParcelType.TRACKED:
+                url = parcels
+            case ParcelType.SENT:
+                url = sent
+            case ParcelType.RETURNS:
+                url = returns
+            case _:
+                raise ParcelTypeError(reason=f'Unknown parcel type: {parcel_type}')
+
+        async with await self.sess.get(url=url,
                                        headers={'Authorization': self.auth_token},
                                        ) as resp:
             if resp.status == 200:
@@ -152,3 +169,88 @@ class Inpost:
 
             else:
                 raise SomeAPIError(reason=resp)
+
+    async def collect_compartment_properties(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
+                                             location: dict | None = None) -> bool:
+        assert shipment_number is not None and parcel_obj is not None, 'shipment_number and parcel_obj arguments ' \
+                                                                       'filled, choose one '
+
+        if shipment_number is not None and parcel_obj is None:
+            parcel_obj = await self.get_parcel(shipment_number=shipment_number, parse=True)
+
+        async with await self.sess.post(url=collect,
+                                        headers={'Authorization': self.auth_token},
+                                        json={
+                                            'parcel': parcel_obj.compartment_open_data,
+                                            'geoPoint': location if location is not None else parcel_obj.mocked_location
+                                        }) as collect_resp:
+            if collect_resp.status == 200:
+                parcel_obj.compartment_properties(await collect_resp.json())
+                self.parcel = parcel_obj
+                return True
+
+            else:
+                raise SomeAPIError(reason=collect_resp)
+
+    async def open_compartment(self):
+        async with await self.sess.post(url=compartment_open,
+                                        headers={'Authorization': self.auth_token},
+                                        json={
+                                            'sessionUuid': self.parcel.compartment_properties.session_uuid
+                                        }) as compartment_open_resp:
+            if compartment_open_resp == 200:
+                self.parcel.compartment_properties.location(await compartment_open_resp.json())
+                return True
+
+            else:
+                raise SomeAPIError(reason=compartment_open_resp)
+
+    async def check_compartment_status(self, expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED):
+        async with await self.sess.post(url=compartment_status,
+                                        headers={'Authorization': self.auth_token},
+                                        json={
+                                            'sessionUuid': self.parcel.compartment_properties.session_uuid,
+                                            'expectedStatus': expected_status.name
+                                        }) as compartment_status_resp:
+            if compartment_status_resp.status == 200:
+                return CompartmentExpectedStatus[(await compartment_status_resp.json())['status']] == expected_status
+            else:
+                raise SomeAPIError(reason=compartment_status_resp)
+
+    async def terminate_collect_session(self):
+        async with await self.sess.post(url=terminate_collect_session,
+                                        headers={'Authorization': self.auth_token},
+                                        json={
+                                            'sessionUuid': self.parcel.compartment_properties.session_uuid
+                                        }) as terminate_resp:
+            if terminate_resp.status == 200:
+                return True
+            else:
+                raise SomeAPIError(reason=terminate_resp)
+
+    async def collect(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
+                      location: dict | None = None) -> bool:
+        assert shipment_number is not None and parcel_obj is not None, 'shipment_number and parcel_obj arguments ' \
+                                                                       'filled, choose one '
+
+        if shipment_number is not None and parcel_obj is None:
+            parcel_obj = await self.get_parcel(shipment_number=shipment_number, parse=True)
+
+        if await self.collect_compartment_properties(parcel_obj=parcel_obj, location=location):
+            if await self.open_compartment():
+                if await self.check_compartment_status():
+                    return True
+
+        return False
+
+    async def close_compartment(self) -> bool:
+        if await self.check_compartment_status(expected_status=CompartmentExpectedStatus.CLOSED):
+            if await self.terminate_collect_session():
+                return True
+
+        return False
+
+    async def get_prices(self) -> dict:
+        async with await self.sess.get(url=parcel_prices,
+                                       headers={'Authorization': self.auth_token}) as resp:
+            return await resp.json()
