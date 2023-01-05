@@ -2,7 +2,7 @@
 from typing import Optional, Any
 
 
-class SomeParcelError(Exception):
+class UnidentifiedParcelError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
         self.msg: str = Optional[str]
@@ -80,7 +80,7 @@ class RefreshTokenException(Exception):
         return self.reason
 
 
-class SomeAPIError(Exception):
+class UnidentifiedAPIError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
         self.msg: str = Optional[str]
@@ -93,6 +93,17 @@ class SomeAPIError(Exception):
 
 # ----------------- Other ----------------- #
 class UserLocationError(Exception):
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.msg: str = Optional[str]
+        self.reason: Any = Optional[Any]
+
+    @property
+    def stack(self):
+        return self.reason
+
+
+class UnidentifiedError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
         self.msg: str = Optional[str]
