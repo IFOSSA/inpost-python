@@ -1,3 +1,4 @@
+import random
 from io import BytesIO
 from typing import List, Optional, Tuple, Union
 
@@ -78,11 +79,11 @@ class Parcel:
         }
 
     @property
-    def mocked_location(self):  # TODO[1]: MAKE IT MORE RANDOM
+    def mocked_location(self):
         return {
-            'latitude': self.pickup_point.latitude,
-            'longitude': self.pickup_point.longitude,
-            'accuracy': 3
+            'latitude': round(self.pickup_point.latitude + random.uniform(-0.00005, 0.00005), 6),
+            'longitude': round(self.pickup_point.longitude + random.uniform(-0.00005, 0.00005), 6),
+            'accuracy': round(random.uniform(1, 4), 1)
         }
 
 
