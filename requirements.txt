@@ -1,0 +1,7 @@
+aiohttp~=3.8.1
+setuptools~=57.0.0
+arrow~=1.2.3
+PyYAML~=6.0
+Telethon~=1.26.0
+
+qrcode~=7.3.1
