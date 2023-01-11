@@ -5,8 +5,8 @@ from inpost.static import *
 
 
 class Inpost:
-    def __init__(self, phone_number: str):
-        self.phone_number: str = phone_number
+    def __init__(self):
+        self.phone_number: str | None = None
         self.sms_code: str | None = None
         self.auth_token: str | None = None
         self.refr_token: str | None = None
@@ -14,7 +14,11 @@ class Inpost:
         self.parcel: Parcel | None = None
 
     def __repr__(self):
-        return f'Username: {self.phone_number}\nToken: {self.auth_token}'
+        return f'Phone number: {self.phone_number}\nToken: {self.auth_token}'
+
+    async def set_phone_number(self, phone_number: str) -> bool | None:
+        self.phone_number = phone_number
+        return True
 
     async def send_sms_code(self) -> bool | None:
         async with await self.sess.post(url=send_sms_code,
@@ -44,9 +48,6 @@ class Inpost:
                 raise SmsCodeConfirmationError(reason=confirmation)
 
     async def refresh_token(self) -> bool | None:
-        if not self.auth_token:
-            raise NotAuthenticatedError(reason='Authentication token missing')
-
         if not self.refr_token:
             raise NotAuthenticatedError(reason='Refresh token missing')
 
@@ -88,7 +89,7 @@ class Inpost:
 
         return False
 
-    async def get_parcel(self, shipment_number: int| str, parse=False) -> dict| Parcel:
+    async def get_parcel(self, shipment_number: int | str, parse=False) -> dict | Parcel:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
