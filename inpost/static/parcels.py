@@ -1,6 +1,6 @@
 import random
 from io import BytesIO
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple
 
 import qrcode
 from arrow import get, arrow
@@ -12,16 +12,16 @@ class Parcel:
     def __init__(self, parcel_data: dict):
         self.shipment_number: str = parcel_data['shipmentNumber']
         self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data['shipmentType']]
-        self._open_code: Optional[str] = parcel_data['openCode'] if 'openCode' in parcel_data else None
-        self._qr_code: Optional[QRCode] = QRCode(parcel_data['qrCode']) if 'qrCode' in parcel_data else None
-        self.stored_date: Optional[arrow] = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
-        self.pickup_date: Optional[arrow] = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
-        self.parcel_size: Union[ParcelLockerSize, ParcelCarrierSize] = ParcelLockerSize[parcel_data['parcelSize']] \
+        self._open_code: str | None = parcel_data['openCode'] if 'openCode' in parcel_data else None
+        self._qr_code: QRCode | None = QRCode(parcel_data['qrCode']) if 'qrCode' in parcel_data else None
+        self.stored_date: arrow | None = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
+        self.pickup_date: arrow | None = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
+        self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
             if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'])
         self.sender: Sender = Sender(sender_data=parcel_data['sender'])
         self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint'])
-        self.multi_compartment: Optional[MultiCompartment] = MultiCompartment(parcel_data['multiCompartment']) \
+        self.multi_compartment: MultiCompartment | None = MultiCompartment(parcel_data['multiCompartment']) \
             if 'multiCompartment' in parcel_data else None
         self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
         self.operations: Operations = Operations(operations_data=parcel_data['operations'])
@@ -134,7 +134,7 @@ class PickupPoint:
 class MultiCompartment:
     def __init__(self, multicompartment_data):
         self.uuid = multicompartment_data['uuid']
-        self.shipment_numbers: Optional[List['str']] = multicompartment_data['shipmentNumbers'] \
+        self.shipment_numbers: List[str] | None = multicompartment_data['shipmentNumbers'] \
             if 'shipmentNumbers' in multicompartment_data else None
         self.presentation: bool = multicompartment_data['presentation']
         self.collected: bool = multicompartment_data['collected']
@@ -143,7 +143,7 @@ class MultiCompartment:
 class Operations:
     def __init__(self, operations_data):
         self.manual_archive: bool = operations_data['manualArchive']
-        self.auto_archivable_since: Optional[arrow] = get(
+        self.auto_archivable_since: arrow | None = get(
             operations_data['autoArchivableSince']) if 'autoArchivableSince' in operations_data else None
         self.delete: bool = operations_data['delete']
         self.collect: bool = operations_data['collect']

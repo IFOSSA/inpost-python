@@ -1,5 +1,5 @@
 from aiohttp import ClientSession
-from typing import Optional, Union, List
+from typing import List
 
 from inpost.static import *
 
@@ -16,7 +16,7 @@ class Inpost:
     def __repr__(self):
         return f'Username: {self.phone_number}\nToken: {self.auth_token}'
 
-    async def send_sms_code(self) -> Optional[bool]:
+    async def send_sms_code(self) -> bool | None:
         async with await self.sess.post(url=send_sms_code,
                                         json={
                                             'phoneNumber': f'{self.phone_number}'
@@ -26,7 +26,7 @@ class Inpost:
             else:
                 raise PhoneNumberError(reason=phone)
 
-    async def confirm_sms_code(self, sms_code: str) -> Optional[bool]:
+    async def confirm_sms_code(self, sms_code: str) -> bool | None:
         async with await self.sess.post(url=confirm_sms_code,
                                         headers=appjson,
                                         json={
@@ -43,7 +43,7 @@ class Inpost:
             else:
                 raise SmsCodeConfirmationError(reason=confirmation)
 
-    async def refresh_token(self) -> Optional[bool]:
+    async def refresh_token(self) -> bool | None:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Authentication token missing')
 
@@ -66,7 +66,7 @@ class Inpost:
             else:
                 raise RefreshTokenException(reason=confirmation)
 
-    async def logout(self) -> Optional[bool]:
+    async def logout(self) -> bool | None:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
@@ -88,7 +88,7 @@ class Inpost:
 
         return False
 
-    async def get_parcel(self, shipment_number: Union[int, str], parse=False) -> Union[dict, Parcel]:
+    async def get_parcel(self, shipment_number: int| str, parse=False) -> dict| Parcel:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
@@ -103,11 +103,11 @@ class Inpost:
 
     async def get_parcels(self,
                           parcel_type: ParcelType = ParcelType.TRACKED,
-                          status: Optional[Union[ParcelStatus, List[ParcelStatus]]] = None,
-                          pickup_point: Optional[Union[str, List[str]]] = None,
-                          shipment_type: Optional[Union[ParcelShipmentType, List[ParcelShipmentType]]] = None,
-                          parcel_size: Optional[Union[ParcelLockerSize, ParcelCarrierSize]] = None,
-                          parse: bool = False) -> Union[List[dict], List[Parcel]]:
+                          status: ParcelStatus | List[ParcelStatus] | None = None,
+                          pickup_point: str | List[str] | None = None,
+                          shipment_type: ParcelShipmentType | List[ParcelShipmentType] | None = None,
+                          parcel_size: ParcelLockerSize | ParcelCarrierSize | None = None,
+                          parse: bool = False) -> List[dict] | List[Parcel]:
         if not self.auth_token:
             raise NotAuthenticatedError(reason='Not logged in')
 
