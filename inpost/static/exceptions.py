@@ -1,26 +1,24 @@
 # ----------------- Parcels ----------------- #
-from typing import Optional, Any
+from typing import Any
 
 
 class UnidentifiedParcelError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class ParcelTypeError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
@@ -28,66 +26,60 @@ class ParcelTypeError(Exception):
 class NotAuthenticatedError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class ReAuthenticationError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class PhoneNumberError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class SmsCodeConfirmationError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class RefreshTokenException(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class UnidentifiedAPIError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
@@ -95,20 +87,18 @@ class UnidentifiedAPIError(Exception):
 class UserLocationError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
 
 
 class UnidentifiedError(Exception):
     def __init__(self, reason):
         super().__init__(reason)
-        self.msg: str = Optional[str]
-        self.reason: Any = Optional[Any]
+        self.reason: Any = reason
 
     @property
-    def stack(self):
+    def stacktrace(self):
         return self.reason
