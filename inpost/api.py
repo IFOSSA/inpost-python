@@ -1,9 +1,7 @@
 from aiohttp import ClientSession
+from typing import Optional, Union, List
 
-from static.endpoints import *
-from static.headers import appjson
-from static.exceptions import *
-from static.parcels import *
+from inpost.static import *
 
 
 class Inpost:

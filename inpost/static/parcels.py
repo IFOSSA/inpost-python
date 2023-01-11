@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Union
 import qrcode
 from arrow import get, arrow
 
-from static.statuses import *
+from inpost.static.statuses import *
 
 
 class Parcel:
