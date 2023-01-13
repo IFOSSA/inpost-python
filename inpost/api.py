@@ -19,7 +19,7 @@ class Inpost:
         return f'Phone number: {self.phone_number}\nToken: {self.auth_token}'
 
     async def set_phone_number(self, phone_number: str) -> bool | None:
-        self._log = logging.getLogger(f'inpost.{phone_number}')
+        self._log = logging.getLogger(f'{__class__.__name__}.{phone_number}')
         self._log.setLevel(level=logging.DEBUG)
         self._log.info(f'initializing inpost object with phone number {phone_number}')
         self.phone_number = phone_number
@@ -129,7 +129,7 @@ class Inpost:
                                        ) as resp:
             if resp.status == 200:
                 self._log.debug(f'parcel with shipment number {shipment_number} received')
-                return await resp.json() if not parse else Parcel(await resp.json())
+                return await resp.json() if not parse else Parcel(await resp.json(), logger=self._log)
 
             else:
                 self._log.error(f'could not get parcel with shipment number {shipment_number}')
@@ -201,7 +201,7 @@ class Inpost:
                         _parcels = (_parcel for _parcel in _parcels if
                                     ParcelLockerSize[_parcel['parcelSize']] in parcel_size)
 
-                return _parcels if not parse else [Parcel(parcel_data=data) for data in _parcels]
+                return _parcels if not parse else [Parcel(parcel_data=data, logger=self._log) for data in _parcels]
 
             else:
                 self._log.error(f'could not get parcels')
