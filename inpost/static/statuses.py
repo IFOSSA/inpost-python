@@ -26,6 +26,7 @@ class ParcelCarrierSize(ParcelBase):
     B = '19x38x64'
     C = '41x38x64'
     D = '50x50x80'
+    OTHER = 'UNKNOWN'
 
 
 class ParcelLockerSize(ParcelBase):
@@ -36,13 +37,13 @@ class ParcelLockerSize(ParcelBase):
 
 class ParcelDeliveryType(ParcelBase):
     parcel_locker = 'Paczkomat'
-    carrier = 'Kurier'
+    courier = 'Kurier'
     parcel_point = 'PaczkoPunkt'
 
 
 class ParcelShipmentType(ParcelBase):
     parcel = 'Paczkomat'
-    carrier = 'Kurier'
+    courier = 'Kurier'
     parcel_point = 'PaczkoPunkt'
 
 
@@ -70,6 +71,7 @@ class ParcelStatus(ParcelBase):
     ADOPTED_AT_SORTING_CENTER = 'Przyjęta w sortowni'
     SENT_FROM_SOURCE_BRANCH = 'Wysłana z oddziału'
     OUT_FOR_DELIVERY = 'Wydana do doręczenia'
+    OUT_FOR_DELIVERY_TO_ADDRESS = 'Gotowa do doręczenia'
     READY_TO_PICKUP = 'Gotowa do odbioru'
     DELIVERED = 'Doręczona'
 

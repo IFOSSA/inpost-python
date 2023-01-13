@@ -20,7 +20,8 @@ class Parcel:
             if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'])
         self.sender: Sender = Sender(sender_data=parcel_data['sender'])
-        self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint'])
+        self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint']) \
+            if 'pickUpPoint' in parcel_data else None
         self.multi_compartment: MultiCompartment | None = MultiCompartment(parcel_data['multiCompartment']) \
             if 'multiCompartment' in parcel_data else None
         self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
@@ -40,35 +41,51 @@ class Parcel:
 
     @property
     def open_code(self):
-        return self._open_code
+        if self.shipment_type == ParcelShipmentType.parcel:
+            return self._open_code
+
+        return None
 
     @property
     def generate_qr_image(self):
-        return self._qr_code.qr_image
+        if self.shipment_type == ParcelShipmentType.parcel:
+            return self._qr_code.qr_image
+
+        return None
 
     @property
     def compartment_properties(self):
-        return self._compartment_properties
+        if self.shipment_type == ParcelShipmentType.parcel:
+            return self._compartment_properties
+
+        return None
 
     @compartment_properties.setter
     def compartment_properties(self, compartmentproperties_data: dict):
-        self._compartment_properties = CompartmentProperties(compartmentproperties_data=compartmentproperties_data)
+        if self.shipment_type == ParcelShipmentType.parcel:
+            self._compartment_properties = CompartmentProperties(compartmentproperties_data=compartmentproperties_data)
 
     @property
     def compartment_location(self):
-        return self._compartment_properties.location
+        if self.shipment_type == ParcelShipmentType.parcel:
+            return self._compartment_properties.location
+
+        return None
 
     @compartment_location.setter
     def compartment_location(self, location_data):
-        self._compartment_properties.location = location_data
+        if self.shipment_type == ParcelShipmentType.parcel:
+            self._compartment_properties.location = location_data
 
     @property
     def compartment_status(self):
-        return self._compartment_properties.status
+        if self.shipment_type == ParcelShipmentType.parcel:
+            return self._compartment_properties.status
 
     @compartment_status.setter
     def compartment_status(self, status):
-        self._compartment_properties.status = status
+        if self.shipment_type == ParcelShipmentType.parcel:
+            self._compartment_properties.status = status
 
     @property
     def compartment_open_data(self):
@@ -80,11 +97,14 @@ class Parcel:
 
     @property
     def mocked_location(self):
-        return {
-            'latitude': round(self.pickup_point.latitude + random.uniform(-0.00005, 0.00005), 6),
-            'longitude': round(self.pickup_point.longitude + random.uniform(-0.00005, 0.00005), 6),
-            'accuracy': round(random.uniform(1, 4), 1)
-        }
+        if self.shipment_type == ParcelShipmentType.parcel:
+            return {
+                'latitude': round(self.pickup_point.latitude + random.uniform(-0.00005, 0.00005), 6),
+                'longitude': round(self.pickup_point.longitude + random.uniform(-0.00005, 0.00005), 6),
+                'accuracy': round(random.uniform(1, 4), 1)
+            }
+
+        return None
 
 
 class Receiver:
