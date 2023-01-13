@@ -1,5 +1,6 @@
 from aiohttp import ClientSession
 from typing import List
+import logging
 
 from inpost.static import *
 
@@ -12,25 +13,39 @@ class Inpost:
         self.refr_token: str | None = None
         self.sess: ClientSession = ClientSession()
         self.parcel: Parcel | None = None
+        self._log: logging.Logger | None = None
 
     def __repr__(self):
         return f'Phone number: {self.phone_number}\nToken: {self.auth_token}'
 
     async def set_phone_number(self, phone_number: str) -> bool | None:
+        self._log = logging.getLogger(f'inpost.{phone_number}')
+        self._log.setLevel(level=logging.DEBUG)
+        self._log.info(f'initializing inpost object with phone number {phone_number}')
         self.phone_number = phone_number
         return True
 
     async def send_sms_code(self) -> bool | None:
+        if not self.phone_number:  # can't log it cuz if there's no phone number no logger initialized @shrug
+            raise PhoneNumberError('Phone number missing')
+
+        self._log.info(f'sending sms code')
         async with await self.sess.post(url=send_sms_code,
                                         json={
                                             'phoneNumber': f'{self.phone_number}'
                                         }) as phone:
             if phone.status == 200:
+                self._log.debug(f'sms code sent')
                 return True
             else:
+                self._log.error(f'could not sent sms code')
                 raise PhoneNumberError(reason=phone)
 
     async def confirm_sms_code(self, sms_code: str) -> bool | None:
+        if not self.phone_number:  # can't log it cuz if there's no phone number no logger initialized @shrug
+            raise PhoneNumberError('Phone number missing')
+
+        self._log.info(f'confirming sms code')
         async with await self.sess.post(url=confirm_sms_code,
                                         headers=appjson,
                                         json={
@@ -43,12 +58,17 @@ class Inpost:
                 self.sms_code = sms_code
                 self.refr_token = resp['refreshToken']
                 self.auth_token = resp['authToken']
+                self._log.debug(f'sms code confirmed')
                 return True
             else:
+                self._log.error(f'could not confirm sms code')
                 raise SmsCodeConfirmationError(reason=confirmation)
 
     async def refresh_token(self) -> bool | None:
+        self._log.info(f'refreshing token')
+
         if not self.refr_token:
+            self._log.error(f'refresh token missing')
             raise NotAuthenticatedError(reason='Refresh token missing')
 
         async with await self.sess.post(url=refresh_token,
@@ -60,15 +80,21 @@ class Inpost:
             if confirmation.status == 200:
                 resp = await confirmation.json()
                 if resp['reauthenticationRequired']:
+                    self._log.error(f'could not reauthenticate')
                     raise ReAuthenticationError(reason='You need to log in again!')
                 self.auth_token = resp['authToken']
+                self._log.debug(f'token refreshed')
                 return True
 
             else:
+                self._log.error(f'error: {confirmation}')
                 raise RefreshTokenException(reason=confirmation)
 
     async def logout(self) -> bool | None:
+        self._log.info(f'logging out')
+
         if not self.auth_token:
+            self._log.error(f'authorization token missing')
             raise NotAuthenticatedError(reason='Not logged in')
 
         async with await self.sess.post(url=logout,
@@ -83,23 +109,30 @@ class Inpost:
                 raise UnidentifiedAPIError(reason=resp)
 
     async def disconnect(self) -> bool:
+        self._log.info(f'disconnecting')
         if await self.logout():
             await self.sess.close()
+            self._log.debug(f'refreshing disconnected')
             return True
 
         return False
 
     async def get_parcel(self, shipment_number: int | str, parse=False) -> dict | Parcel:
+        self._log.info(f'getting parcel with shipment number: {shipment_number}')
+
         if not self.auth_token:
+            self._log.error(f'authorization token missing')
             raise NotAuthenticatedError(reason='Not logged in')
 
         async with await self.sess.get(url=f"{parcel}{shipment_number}",
                                        headers={'Authorization': self.auth_token},
                                        ) as resp:
             if resp.status == 200:
+                self._log.debug(f'parcel with shipment number {shipment_number} received')
                 return await resp.json() if not parse else Parcel(await resp.json())
 
             else:
+                self._log.error(f'could not get parcel with shipment number {shipment_number}')
                 raise UnidentifiedAPIError(reason=resp)
 
     async def get_parcels(self,
@@ -109,10 +142,13 @@ class Inpost:
                           shipment_type: ParcelShipmentType | List[ParcelShipmentType] | None = None,
                           parcel_size: ParcelLockerSize | ParcelCarrierSize | None = None,
                           parse: bool = False) -> List[dict] | List[Parcel]:
+        self._log.info('getting parcels')
         if not self.auth_token:
+            self._log.error(f'authorization token missing')
             raise NotAuthenticatedError(reason='Not logged in')
 
         if not isinstance(parcel_type, ParcelType):
+            self._log.error(f'wrong parcel type {parcel_type}')
             raise ParcelTypeError(reason=f'Unknown parcel type: {parcel_type}')
 
         match parcel_type:
@@ -123,12 +159,14 @@ class Inpost:
             case ParcelType.RETURNS:
                 url = returns
             case _:
+                self._log.error(f'wrong parcel type {parcel_type}')
                 raise ParcelTypeError(reason=f'Unknown parcel type: {parcel_type}')
 
         async with await self.sess.get(url=url,
                                        headers={'Authorization': self.auth_token},
                                        ) as resp:
             if resp.status == 200:
+                self._log.debug(f'received {parcel_type} parcels')
                 _parcels = (await resp.json())['parcels']
 
                 if status is not None:
@@ -166,12 +204,14 @@ class Inpost:
                 return _parcels if not parse else [Parcel(parcel_data=data) for data in _parcels]
 
             else:
+                self._log.error(f'could not get parcels')
                 raise UnidentifiedAPIError(reason=resp)
 
     async def collect_compartment_properties(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
                                              location: dict | None = None) -> bool:
-
+        self._log.info(f'collecting compartment properties for {shipment_number}')
         if shipment_number is not None and parcel_obj is None:
+            self._log.debug(f'parcel_obj not provided, getting from shipment number {shipment_number}')
             parcel_obj = await self.get_parcel(shipment_number=shipment_number, parse=True)
 
         async with await self.sess.post(url=collect,
@@ -181,11 +221,13 @@ class Inpost:
                                             'geoPoint': location if location is not None else parcel_obj.mocked_location
                                         }) as collect_resp:
             if collect_resp.status == 200:
+                self._log.debug(f'collected compartment properties for {shipment_number}')
                 parcel_obj.compartment_properties = await collect_resp.json()
                 self.parcel = parcel_obj
                 return True
 
             else:
+                self._log.error(f'could not collect compartment properties for {shipment_number}')
                 raise UnidentifiedAPIError(reason=collect_resp)
 
     async def open_compartment(self):
@@ -195,14 +237,18 @@ class Inpost:
                                             'sessionUuid': self.parcel.compartment_properties.session_uuid
                                         }) as compartment_open_resp:
             if compartment_open_resp.status == 200:
+                self._log.debug(f'opened comaprtment for {self.parcel.shipment_number}')
                 self.parcel.compartment_properties.location = await compartment_open_resp.json()
                 return True
 
             else:
+                self._log.error(f'could not open compartment for {self.parcel.shipment_number}')
                 raise UnidentifiedAPIError(reason=compartment_open_resp)
 
     async def check_compartment_status(self,
                                        expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED):
+        self._log.info(f'checking compartment status for {self.parcel.shipment_number}')
+
         async with await self.sess.post(url=compartment_status,
                                         headers={'Authorization': self.auth_token},
                                         json={
@@ -210,23 +256,31 @@ class Inpost:
                                             'expectedStatus': expected_status.name
                                         }) as compartment_status_resp:
             if compartment_status_resp.status == 200:
+                self._log.debug(f'checked compartment status for {self.parcel.shipment_number}')
                 return CompartmentExpectedStatus[(await compartment_status_resp.json())['status']] == expected_status
             else:
+                self._log.error(f'could not check compartment status for {self.parcel.shipment_number}')
                 raise UnidentifiedAPIError(reason=compartment_status_resp)
 
     async def terminate_collect_session(self):
+        self._log.info(f'terminating collect session for {self.parcel.shipment_number}')
+
         async with await self.sess.post(url=terminate_collect_session,
                                         headers={'Authorization': self.auth_token},
                                         json={
                                             'sessionUuid': self.parcel.compartment_properties.session_uuid
                                         }) as terminate_resp:
             if terminate_resp.status == 200:
+                self._log.debug(f'terminated collect session for {self.parcel.shipment_number}')
                 return True
             else:
+                self._log.error(f'could not terminate collect session for {self.parcel.shipment_number}')
                 raise UnidentifiedAPIError(reason=terminate_resp)
 
     async def collect(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
                       location: dict | None = None) -> bool:
+        self._log.info(f'collecing parcel with shipment number {self.parcel.shipment_number}')
+
         if shipment_number is not None and parcel_obj is None:
             parcel_obj = await self.get_parcel(shipment_number=shipment_number, parse=True)
 
@@ -238,6 +292,8 @@ class Inpost:
         return False
 
     async def close_compartment(self) -> bool:
+        self._log.info(f'closing compartment for {self.parcel.shipment_number}')
+
         if await self.check_compartment_status(expected_status=CompartmentExpectedStatus.CLOSED):
             if await self.terminate_collect_session():
                 return True
@@ -245,6 +301,17 @@ class Inpost:
         return False
 
     async def get_prices(self) -> dict:
+        self._log.info(f'getting parcel prices')
+
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
         async with await self.sess.get(url=parcel_prices,
                                        headers={'Authorization': self.auth_token}) as resp:
-            return await resp.json()
+            if resp.status == 200:
+                self._log.debug(f'got parcel prices')
+                return await resp.json()
+
+            else:
+                raise UnidentifiedAPIError(reason=resp)
