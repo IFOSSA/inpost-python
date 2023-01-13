@@ -51,7 +51,7 @@ class Parcel:
         if self.status == ParcelStatus.UNKNOWN:
             self._log.debug(f'unexpected parcel status: {parcel_data["status"]}')
 
-        if self.ownership_status:
+        if self.ownership_status == ParcelOwnership.UNKNOWN:
             self._log.debug(f'unexpected ownership status: {parcel_data["ownershipStatus"]}')
 
     def __str__(self):
