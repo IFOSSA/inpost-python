@@ -1,104 +1,83 @@
-# ----------------- Parcels ----------------- #
 from typing import Any
+from statuses import ParcelType
+from parcels import Parcel
+from inpost.api import Inpost
 
 
-class UnidentifiedParcelError(Exception):
+# ------------------ Base ------------------- #
+class BaseInpostError(Exception):
+    """Base exception to inherit from
+    :param reason: reason of :class:`BaseInpostError` happening
+    :type reason: typing.Any"""
     def __init__(self, reason):
+        """Constructor method"""
         super().__init__(reason)
         self.reason: Any = reason
 
     @property
     def stacktrace(self):
+        """Gets stacktrace of raised exception """
         return self.reason
 
 
-class ParcelTypeError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
+# ----------------- Parcels ----------------- #
 
-    @property
-    def stacktrace(self):
-        return self.reason
+class ParcelTypeError(BaseInpostError):
+    """Is raised when expected :class:`ParcelType` does not match with actual one"""
+    pass
+
+
+class UnidentifiedParcelError(BaseInpostError):
+    """Is raised when no other :class:`Parcel` error match"""
+    pass
 
 
 # ----------------- API ----------------- #
-class NotAuthenticatedError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class NotAuthenticatedError(BaseInpostError):
+    """Is raised when `Inpost.auth_token` is missing"""
+    pass
 
 
-class ReAuthenticationError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class ReAuthenticationError(BaseInpostError):
+    """Is raised when `Inpost.auth_token` has expired"""
+    pass
 
 
-class PhoneNumberError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class PhoneNumberError(BaseInpostError):
+    """Is raised when `Inpost.phone_number` is invalid or unexpected error connected with phone number occurs"""
+    pass
 
 
-class SmsCodeConfirmationError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class SmsCodeError(BaseInpostError):
+    """Is raised when `Inpost.sms_code` is invalid or unexpected sms_code occurs"""
+    pass
 
 
-class RefreshTokenException(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class RefreshTokenError(BaseInpostError):
+    """Is raised when `Inpost.refr_token` is invalid or unexpected error connected with refresh token occurs"""
+    pass
 
 
-class UnidentifiedAPIError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
+class NotFoundError(BaseInpostError):
+    """Is raised when method from :class:`Inpost` returns 404 Not Found HTTP status code"""
+    pass
 
-    @property
-    def stacktrace(self):
-        return self.reason
+
+class UnauthorizedError(BaseInpostError):
+    """Is raised when method from :class:`Inpost` returns 401 Unauthorized HTTP status code"""
+    pass
+
+
+class UnidentifiedAPIError(BaseInpostError):
+    """Is raised when no other API error match"""
+    pass
 
 
 # ----------------- Other ----------------- #
-class UserLocationError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class UserLocationError(BaseInpostError):
+    pass
 
 
-class UnidentifiedError(Exception):
-    def __init__(self, reason):
-        super().__init__(reason)
-        self.reason: Any = reason
-
-    @property
-    def stacktrace(self):
-        return self.reason
+class UnidentifiedError(BaseInpostError):
+    """Is raised when no other error match"""
+    pass
