@@ -5,8 +5,8 @@ from .statuses import ParcelCarrierSize, ParcelLockerSize, ParcelDeliveryType, P
     ParcelAdditionalInsurance, ParcelType, ParcelOwnership, CompartmentExpectedStatus, CompartmentActualStatus, \
     ParcelServiceName, ParcelStatus
 from .exceptions import UnidentifiedParcelError, ParcelTypeError, NotAuthenticatedError, ReAuthenticationError, \
-    PhoneNumberError, SmsCodeConfirmationError, RefreshTokenException, UnidentifiedAPIError, UserLocationError, \
-    UnidentifiedError
+    PhoneNumberError, SmsCodeError, RefreshTokenError, UnidentifiedAPIError, UserLocationError, \
+    UnidentifiedError, NotFoundError, UnauthorizedError
 from .endpoints import login, send_sms_code, confirm_sms_code, refresh_token, parcels, parcel, collect, \
     compartment_open, compartment_status, terminate_collect_session, friends, shared, sent, returns, parcel_prices, \
     tickets, logout
