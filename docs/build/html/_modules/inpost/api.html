@@ -1,0 +1,875 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>inpost.api &#8212; inpost-python 0.0.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for inpost.api</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">aiohttp</span> <span class="kn">import</span> <span class="n">ClientSession</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">inpost.static</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Inpost"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost">[docs]</a><span class="k">class</span> <span class="nc">Inpost</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Python representation of an Inpost app. Essentially implements methods to manage all incoming parcels&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Inpost.__init__"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sms_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refr_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="p">:</span> <span class="n">ClientSession</span> <span class="o">=</span> <span class="n">ClientSession</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span> <span class="n">Parcel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;Phone number: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="si">}</span><span class="se">\n</span><span class="s1">Token: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="si">}</span><span class="s1">&#39;</span>
+
+<div class="viewcode-block" id="Inpost.from_phone_number"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.from_phone_number">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">from_phone_number</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">phone_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;`Classmethod` to initialize :class:`Inpost` object with phone number</span>
+
+<span class="sd">        :param phone_number: User&#39;s Inpost phone number</span>
+<span class="sd">        :type phone_number: str | int&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phone_number</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">phone_number</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">phone_number</span><span class="p">)</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="k">await</span> <span class="n">inp</span><span class="o">.</span><span class="n">set_phone_number</span><span class="p">(</span><span class="n">phone_number</span><span class="o">=</span><span class="n">phone_number</span><span class="p">)</span>
+        <span class="n">inp</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;initialized by from_phone_number&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inp</span></div>
+
+<div class="viewcode-block" id="Inpost.set_phone_number"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.set_phone_number">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">set_phone_number</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phone_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set :class:`Inpost` phone number required for verification</span>
+
+<span class="sd">        :param phone_number: User&#39;s Inpost phone number</span>
+<span class="sd">        :type phone_number: str | int</span>
+<span class="sd">        :return: True if `Inpost.phone_number` is set</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises PhoneNumberError: Wrong phone number format&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phone_number</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">phone_number</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">phone_number</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">phone_number</span><span class="p">)</span> <span class="o">==</span> <span class="mi">9</span> <span class="ow">and</span> <span class="n">phone_number</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">phone_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;initializing inpost object with phone number </span><span class="si">{</span><span class="n">phone_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span> <span class="o">=</span> <span class="n">phone_number</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">raise</span> <span class="n">PhoneNumberError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Wrong phone number format: </span><span class="si">{</span><span class="n">phone_number</span><span class="si">}</span><span class="s1"> (should be 9 digits)&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Inpost.send_sms_code"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.send_sms_code">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">send_sms_code</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sends sms code to `Inpost.phone_number`</span>
+
+<span class="sd">        :return: True if sms code sent</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises PhoneNumberError: Missing phone number</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected things happened</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="p">:</span>  <span class="c1"># can&#39;t log it cuz if there&#39;s no phone number no logger initialized @shrug</span>
+            <span class="k">raise</span> <span class="n">PhoneNumberError</span><span class="p">(</span><span class="s1">&#39;Phone number missing&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;sending sms code&#39;</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">send_sms_code</span><span class="p">,</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s1">&#39;phoneNumber&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="si">}</span><span class="s1">&#39;</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">phone</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">phone</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;sms code sent&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not send sms code, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">phone</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not send sms code, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">phone</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not send sms code, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">phone</span><span class="p">)</span></div>
+
+            <span class="c1"># if phone.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;sms code sent&#39;)</span>
+            <span class="c1">#     return True</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not sent sms code&#39;)</span>
+            <span class="c1">#     raise PhoneNumberError(reason=phone)</span>
+
+<div class="viewcode-block" id="Inpost.confirm_sms_code"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.confirm_sms_code">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">confirm_sms_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sms_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Confirms sms code sent to `Inpost.phone_number` and fetches tokens</span>
+
+<span class="sd">        :param sms_code: sms code sent to Inpost.phone_number device</span>
+<span class="sd">        :type sms_code: str | int</span>
+<span class="sd">        :return: True if sms code gets confirmed and tokens fetched</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises SmsCodeError: Wrong sms code format</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="p">:</span>  <span class="c1"># can&#39;t log it cuz if there&#39;s no phone number no logger initialized @shrug</span>
+            <span class="k">raise</span> <span class="n">PhoneNumberError</span><span class="p">(</span><span class="s1">&#39;Phone number missing&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sms_code</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">sms_code</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">sms_code</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sms_code</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">6</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">sms_code</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">SmsCodeError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Wrong sms code format: </span><span class="si">{</span><span class="n">sms_code</span><span class="si">}</span><span class="s1"> (should be 6 digits)&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;confirming sms code&#39;</span><span class="p">)</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">confirm_sms_code</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="n">appjson</span><span class="p">,</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s2">&quot;phoneNumber&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="p">,</span>
+                                            <span class="s2">&quot;smsCode&quot;</span><span class="p">:</span> <span class="n">sms_code</span><span class="p">,</span>
+                                            <span class="s2">&quot;phoneOS&quot;</span><span class="p">:</span> <span class="s2">&quot;Android&quot;</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">confirmation</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">confirmation</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="n">confirmation</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sms_code</span> <span class="o">=</span> <span class="n">sms_code</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">refr_token</span> <span class="o">=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;refreshToken&#39;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span> <span class="o">=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;authToken&#39;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;sms code confirmed&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not confirm sms code, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">confirmation</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not confirm sms code, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">confirmation</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not confirm sms code, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">confirmation</span><span class="p">)</span></div>
+
+            <span class="c1"># if confirmation.status == 200:</span>
+            <span class="c1">#     resp = await confirmation.json()</span>
+            <span class="c1">#     self.sms_code = sms_code</span>
+            <span class="c1">#     self.refr_token = resp[&#39;refreshToken&#39;]</span>
+            <span class="c1">#     self.auth_token = resp[&#39;authToken&#39;]</span>
+            <span class="c1">#     self._log.debug(f&#39;sms code confirmed&#39;)</span>
+            <span class="c1">#     return True</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not confirm sms code&#39;)</span>
+            <span class="c1">#     raise SmsCodeConfirmationError(reason=confirmation)</span>
+
+<div class="viewcode-block" id="Inpost.refresh_token"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.refresh_token">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">refresh_token</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Refreshes authorization token using refresh token</span>
+
+<span class="sd">        :return: True if Inpost.auth_token gets refreshed</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises RefreshTokenError: Missing refresh token</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;refreshing token&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">refr_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;refresh token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">RefreshTokenError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Refresh token missing&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="n">appjson</span><span class="p">,</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s2">&quot;refreshToken&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">refr_token</span><span class="p">,</span>
+                                            <span class="s2">&quot;phoneOS&quot;</span><span class="p">:</span> <span class="s2">&quot;Android&quot;</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">confirmation</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">confirmation</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="n">confirmation</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;reauthenticationRequired&#39;</span><span class="p">]:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not refresh token, log in again&#39;</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="n">ReAuthenticationError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;You need to log in again!&#39;</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span> <span class="o">=</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;authToken&#39;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;token refreshed&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not refresh token, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">confirmation</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not refresh token, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">confirmation</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not refresh token, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">confirmation</span><span class="p">)</span></div>
+
+            <span class="c1"># if confirmation.status == 200:</span>
+            <span class="c1">#     resp = await confirmation.json()</span>
+            <span class="c1">#     if resp[&#39;reauthenticationRequired&#39;]:</span>
+            <span class="c1">#         self._log.error(f&#39;could not refresh token, log in again&#39;)</span>
+            <span class="c1">#         raise ReAuthenticationError(reason=&#39;You need to log in again!&#39;)</span>
+            <span class="c1">#     self.auth_token = resp[&#39;authToken&#39;]</span>
+            <span class="c1">#     self._log.debug(f&#39;token refreshed&#39;)</span>
+            <span class="c1">#     return True</span>
+            <span class="c1">#</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not refresh token&#39;)</span>
+            <span class="c1">#     raise RefreshTokenException(reason=confirmation)</span>
+
+<div class="viewcode-block" id="Inpost.logout"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.logout">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">logout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Logouts user from inpost api service</span>
+
+<span class="sd">        :return: True if the user is logged out</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;logging out&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">logout</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">})</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">refr_token</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sms_code</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;logged out&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not log out, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not log out, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not log out, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span></div>
+
+            <span class="c1"># if resp.status == 200:</span>
+            <span class="c1">#     self.phone_number = None</span>
+            <span class="c1">#     self.refr_token = None</span>
+            <span class="c1">#     self.auth_token = None</span>
+            <span class="c1">#     self.sms_code = None</span>
+            <span class="c1">#     self._log.debug(&#39;logged out&#39;)</span>
+            <span class="c1">#     return True</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(&#39;could not log out&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=resp)</span>
+
+<div class="viewcode-block" id="Inpost.disconnect"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.disconnect">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simplified method to logout and close user&#39;s session</span>
+
+<span class="sd">        :return: True if user is logged out and session is closed else False</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;disconnecting&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">logout</span><span class="p">():</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;disconnected&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not disconnect&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Inpost.get_parcel"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.get_parcel">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_parcel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shipment_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="n">Parcel</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetches single parcel from provided shipment number</span>
+
+<span class="sd">        :param shipment_number: Parcel&#39;s shipment number</span>
+<span class="sd">        :type shipment_number: int | str</span>
+<span class="sd">        :param parse: if set to True method will return :class:`Parcel` else :class:`dict`</span>
+<span class="sd">        :type parse: bool</span>
+<span class="sd">        :return: Fetched parcel data</span>
+<span class="sd">        :rtype: dict | Parcel</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;getting parcel with shipment number: </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parcel</span><span class="si">}{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                       <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">},</span>
+                                       <span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;parcel with shipment number </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1"> received&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="k">await</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">parse</span> <span class="k">else</span> <span class="n">Parcel</span><span class="p">(</span><span class="k">await</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">(),</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not get parcel with shipment number </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not get parcel with shipment number </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not get parcel with shipment number </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span></div>
+            <span class="c1"># if resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;parcel with shipment number {shipment_number} received&#39;)</span>
+            <span class="c1">#     return await resp.json() if not parse else Parcel(await resp.json(), logger=self._log)</span>
+            <span class="c1">#</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not get parcel with shipment number {shipment_number}&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=resp)</span>
+
+<div class="viewcode-block" id="Inpost.get_parcels"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.get_parcels">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_parcels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                          <span class="n">parcel_type</span><span class="p">:</span> <span class="n">ParcelType</span> <span class="o">=</span> <span class="n">ParcelType</span><span class="o">.</span><span class="n">TRACKED</span><span class="p">,</span>
+                          <span class="n">status</span><span class="p">:</span> <span class="n">ParcelStatus</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ParcelStatus</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">pickup_point</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">shipment_type</span><span class="p">:</span> <span class="n">ParcelShipmentType</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ParcelShipmentType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">parcel_size</span><span class="p">:</span> <span class="n">ParcelLockerSize</span> <span class="o">|</span> <span class="n">ParcelCarrierSize</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">parse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">Parcel</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetches all available parcels for set `Inpost.phone_number` and optionally filters them</span>
+
+<span class="sd">        :param parcel_type: Parcel type (e.g. received, sent, returned)</span>
+<span class="sd">        :type parcel_type: ParcelType</span>
+<span class="sd">        :param status: status that each fetched parcels has to be in</span>
+<span class="sd">        :type status: ParcelStatus | list[ParcelStatus] | None</span>
+<span class="sd">        :param pickup_point: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)</span>
+<span class="sd">        :type pickup_point: str | list[str] | None</span>
+<span class="sd">        :param shipment_type: Fetched parcels have to be shipped that way</span>
+<span class="sd">        :type shipment_type: ParcelShipmentType | list[ParcelShipmentType] | None</span>
+<span class="sd">        :param parcel_size: Fetched parcels have to be this size</span>
+<span class="sd">        :type parcel_size: ParcelLockerSize | ParcelCarrierSize | None</span>
+<span class="sd">        :param parse: if set to True method will return list[:class:`Parcel`] else list[:class:`dict`]</span>
+<span class="sd">        :type parse: bool</span>
+<span class="sd">        :return: fetched parcels data</span>
+<span class="sd">        :rtype: list[dict] | list[Parcel]</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises ParcelTypeError: Unknown parcel type selected</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;getting parcels&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parcel_type</span><span class="p">,</span> <span class="n">ParcelType</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;wrong parcel type </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ParcelTypeError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Unknown parcel type: </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">match</span> <span class="n">parcel_type</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">ParcelType</span><span class="o">.</span><span class="n">TRACKED</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;getting parcel type </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">parcels</span>
+            <span class="k">case</span> <span class="n">ParcelType</span><span class="o">.</span><span class="n">SENT</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;getting parcel type </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">sent</span>
+            <span class="k">case</span> <span class="n">ParcelType</span><span class="o">.</span><span class="n">RETURNS</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;getting parcel type </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">returns</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;wrong parcel type </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ParcelTypeError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Unknown parcel type: </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
+                                       <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">},</span>
+                                       <span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;received </span><span class="si">{</span><span class="n">parcel_type</span><span class="si">}</span><span class="s1"> parcels&#39;</span><span class="p">)</span>
+                    <span class="n">_parcels</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">())[</span><span class="s1">&#39;parcels&#39;</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">ParcelStatus</span><span class="p">):</span>
+                            <span class="n">status</span> <span class="o">=</span> <span class="p">[</span><span class="n">status</span><span class="p">]</span>
+
+                        <span class="n">_parcels</span> <span class="o">=</span> <span class="p">(</span><span class="n">_parcel</span> <span class="k">for</span> <span class="n">_parcel</span> <span class="ow">in</span> <span class="n">_parcels</span> <span class="k">if</span> <span class="n">ParcelStatus</span><span class="p">[</span><span class="n">_parcel</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]]</span> <span class="ow">in</span> <span class="n">status</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">pickup_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pickup_point</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                            <span class="n">pickup_point</span> <span class="o">=</span> <span class="p">[</span><span class="n">pickup_point</span><span class="p">]</span>
+
+                        <span class="n">_parcels</span> <span class="o">=</span> <span class="p">(</span><span class="n">_parcel</span> <span class="k">for</span> <span class="n">_parcel</span> <span class="ow">in</span> <span class="n">_parcels</span> <span class="k">if</span> <span class="n">_parcel</span><span class="p">[</span><span class="s1">&#39;pickUpPoint&#39;</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">pickup_point</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">shipment_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shipment_type</span><span class="p">,</span> <span class="n">ParcelShipmentType</span><span class="p">):</span>
+                            <span class="n">shipment_type</span> <span class="o">=</span> <span class="p">[</span><span class="n">shipment_type</span><span class="p">]</span>
+
+                        <span class="n">_parcels</span> <span class="o">=</span> <span class="p">(</span><span class="n">_parcel</span> <span class="k">for</span> <span class="n">_parcel</span> <span class="ow">in</span> <span class="n">_parcels</span> <span class="k">if</span>
+                                    <span class="n">ParcelShipmentType</span><span class="p">[</span><span class="n">_parcel</span><span class="p">[</span><span class="s1">&#39;shipmentType&#39;</span><span class="p">]]</span> <span class="ow">in</span> <span class="n">shipment_type</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">parcel_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parcel_size</span><span class="p">,</span> <span class="n">ParcelCarrierSize</span><span class="p">):</span>
+                            <span class="n">parcel_size</span> <span class="o">=</span> <span class="p">[</span><span class="n">parcel_size</span><span class="p">]</span>
+
+                            <span class="n">_parcels</span> <span class="o">=</span> <span class="p">(</span><span class="n">_parcel</span> <span class="k">for</span> <span class="n">_parcel</span> <span class="ow">in</span> <span class="n">_parcels</span> <span class="k">if</span>
+                                        <span class="n">ParcelCarrierSize</span><span class="p">[</span><span class="n">_parcel</span><span class="p">[</span><span class="s1">&#39;parcelSize&#39;</span><span class="p">]]</span> <span class="ow">in</span> <span class="n">parcel_size</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parcel_size</span><span class="p">,</span> <span class="n">ParcelLockerSize</span><span class="p">):</span>
+                            <span class="n">parcel_size</span> <span class="o">=</span> <span class="p">[</span><span class="n">parcel_size</span><span class="p">]</span>
+
+                            <span class="n">_parcels</span> <span class="o">=</span> <span class="p">(</span><span class="n">_parcel</span> <span class="k">for</span> <span class="n">_parcel</span> <span class="ow">in</span> <span class="n">_parcels</span> <span class="k">if</span>
+                                        <span class="n">ParcelLockerSize</span><span class="p">[</span><span class="n">_parcel</span><span class="p">[</span><span class="s1">&#39;parcelSize&#39;</span><span class="p">]]</span> <span class="ow">in</span> <span class="n">parcel_size</span><span class="p">)</span>
+
+                    <span class="k">return</span> <span class="n">_parcels</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">parse</span> <span class="k">else</span> <span class="p">[</span><span class="n">Parcel</span><span class="p">(</span><span class="n">parcel_data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">_parcels</span><span class="p">]</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not get parcels, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not get parcels, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not get parcels, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span></div>
+
+            <span class="c1"># if resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;received {parcel_type} parcels&#39;)</span>
+            <span class="c1">#     _parcels = (await resp.json())[&#39;parcels&#39;]</span>
+            <span class="c1">#</span>
+            <span class="c1">#     if status is not None:</span>
+            <span class="c1">#         if isinstance(status, ParcelStatus):</span>
+            <span class="c1">#             status = [status]</span>
+            <span class="c1">#</span>
+            <span class="c1">#         _parcels = (_parcel for _parcel in _parcels if ParcelStatus[_parcel[&#39;status&#39;]] in status)</span>
+            <span class="c1">#</span>
+            <span class="c1">#     if pickup_point is not None:</span>
+            <span class="c1">#         if isinstance(pickup_point, str):</span>
+            <span class="c1">#             pickup_point = [pickup_point]</span>
+            <span class="c1">#</span>
+            <span class="c1">#         _parcels = (_parcel for _parcel in _parcels if _parcel[&#39;pickUpPoint&#39;][&#39;name&#39;] in pickup_point)</span>
+            <span class="c1">#</span>
+            <span class="c1">#     if shipment_type is not None:</span>
+            <span class="c1">#         if isinstance(shipment_type, ParcelShipmentType):</span>
+            <span class="c1">#             shipment_type = [shipment_type]</span>
+            <span class="c1">#</span>
+            <span class="c1">#         _parcels = (_parcel for _parcel in _parcels if</span>
+            <span class="c1">#                     ParcelShipmentType[_parcel[&#39;shipmentType&#39;]] in shipment_type)</span>
+            <span class="c1">#</span>
+            <span class="c1">#     if parcel_size is not None:</span>
+            <span class="c1">#         if isinstance(parcel_size, ParcelCarrierSize):</span>
+            <span class="c1">#             parcel_size = [parcel_size]</span>
+            <span class="c1">#</span>
+            <span class="c1">#             _parcels = (_parcel for _parcel in _parcels if</span>
+            <span class="c1">#                         ParcelCarrierSize[_parcel[&#39;parcelSize&#39;]] in parcel_size)</span>
+            <span class="c1">#</span>
+            <span class="c1">#         if isinstance(parcel_size, ParcelLockerSize):</span>
+            <span class="c1">#             parcel_size = [parcel_size]</span>
+            <span class="c1">#</span>
+            <span class="c1">#             _parcels = (_parcel for _parcel in _parcels if</span>
+            <span class="c1">#                         ParcelLockerSize[_parcel[&#39;parcelSize&#39;]] in parcel_size)</span>
+            <span class="c1">#</span>
+            <span class="c1">#     return _parcels if not parse else [Parcel(parcel_data=data, logger=self._log) for data in _parcels]</span>
+            <span class="c1">#</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not get parcels&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=resp)</span>
+
+<div class="viewcode-block" id="Inpost.collect_compartment_properties"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.collect_compartment_properties">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">collect_compartment_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shipment_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                                             <span class="n">parcel_obj</span><span class="p">:</span> <span class="n">Parcel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">location</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates sent data and fetches required compartment properties for opening</span>
+
+<span class="sd">        :param shipment_number: Parcel&#39;s shipment number</span>
+<span class="sd">        :type shipment_number: int | str | None</span>
+<span class="sd">        :param parcel_obj: :class:`Parcel` object to obtain data from</span>
+<span class="sd">        :type parcel_obj: Parcel | None</span>
+<span class="sd">        :param location: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)</span>
+<span class="sd">        :type location: dict | None</span>
+<span class="sd">        :return: fetched parcels data</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened</span>
+
+<span class="sd">        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;collecting compartment properties for </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">shipment_number</span> <span class="ow">and</span> <span class="n">parcel_obj</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;shipment_number and parcel_obj filled in&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SingleParamError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Fields shipment_number and parcel_obj filled in! Choose one!&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">shipment_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">parcel_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;parcel_obj not provided, getting from shipment number </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">parcel_obj</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parcel</span><span class="p">(</span><span class="n">shipment_number</span><span class="o">=</span><span class="n">shipment_number</span><span class="p">,</span> <span class="n">parse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">collect</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">},</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s1">&#39;parcel&#39;</span><span class="p">:</span> <span class="n">parcel_obj</span><span class="o">.</span><span class="n">compartment_open_data</span><span class="p">,</span>
+                                            <span class="s1">&#39;geoPoint&#39;</span><span class="p">:</span> <span class="n">location</span> <span class="k">if</span> <span class="n">location</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">parcel_obj</span><span class="o">.</span><span class="n">mocked_location</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">collect_resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">collect_resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;collected compartment properties for </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">parcel_obj</span><span class="o">.</span><span class="n">compartment_properties</span> <span class="o">=</span> <span class="k">await</span> <span class="n">collect_resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span> <span class="o">=</span> <span class="n">parcel_obj</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not collect compartment properties for </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">collect_resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not collect compartment properties for </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">collect_resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not collect compartment properties for </span><span class="si">{</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">collect_resp</span><span class="p">)</span></div>
+
+            <span class="c1"># if collect_resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;collected compartment properties for {shipment_number}&#39;)</span>
+            <span class="c1">#     parcel_obj.compartment_properties = await collect_resp.json()</span>
+            <span class="c1">#     self.parcel = parcel_obj</span>
+            <span class="c1">#     return True</span>
+            <span class="c1">#</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not collect compartment properties for {shipment_number}&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=collect_resp)</span>
+
+<div class="viewcode-block" id="Inpost.open_compartment"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.open_compartment">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">open_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Opens compartment for `Inpost.parcel` object</span>
+
+<span class="sd">        :return: True if compartment gets opened</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;opening compartment for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">compartment_open</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">},</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s1">&#39;sessionUuid&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">compartment_properties</span><span class="o">.</span><span class="n">session_uuid</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">compartment_open_resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">compartment_open_resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;opened comaprtment for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">compartment_properties</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="k">await</span> <span class="n">compartment_open_resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not open compartment for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">compartment_open_resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not open compartment for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">compartment_open_resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not open compartment for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">compartment_open_resp</span><span class="p">)</span></div>
+
+            <span class="c1"># if compartment_open_resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;opened comaprtment for {self.parcel.shipment_number}&#39;)</span>
+            <span class="c1">#     self.parcel.compartment_properties.location = await compartment_open_resp.json()</span>
+            <span class="c1">#     return True</span>
+            <span class="c1">#</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not open compartment for {self.parcel.shipment_number}&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=compartment_open_resp)</span>
+
+<div class="viewcode-block" id="Inpost.check_compartment_status"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.check_compartment_status">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">check_compartment_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                       <span class="n">expected_status</span><span class="p">:</span> <span class="n">CompartmentExpectedStatus</span> <span class="o">=</span> <span class="n">CompartmentExpectedStatus</span><span class="o">.</span><span class="n">OPENED</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks and compare compartment status (e.g. opened, closed) with expected status</span>
+
+<span class="sd">        :param expected_status: Compartment expected status</span>
+<span class="sd">        :type expected_status: CompartmentExpectedStatus</span>
+<span class="sd">        :return: True if actual status equals expected status else False</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;checking compartment status for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;parcel missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NoParcelError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Parcel is not set&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">compartment_status</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">},</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s1">&#39;sessionUuid&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">compartment_properties</span><span class="o">.</span><span class="n">session_uuid</span><span class="p">,</span>
+                                            <span class="s1">&#39;expectedStatus&#39;</span><span class="p">:</span> <span class="n">expected_status</span><span class="o">.</span><span class="n">name</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">compartment_status_resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">compartment_status_resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;checked compartment status for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">CompartmentExpectedStatus</span><span class="p">[</span>
+                        <span class="p">(</span><span class="k">await</span> <span class="n">compartment_status_resp</span><span class="o">.</span><span class="n">json</span><span class="p">())[</span><span class="s1">&#39;status&#39;</span><span class="p">]]</span> <span class="o">==</span> <span class="n">expected_status</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;could not check compartment status for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">compartment_status_resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not check compartment status for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">compartment_status_resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;could not check compartment status for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">compartment_status_resp</span><span class="p">)</span></div>
+
+            <span class="c1"># if compartment_status_resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;checked compartment status for {self.parcel.shipment_number}&#39;)</span>
+            <span class="c1">#     return CompartmentExpectedStatus[(await compartment_status_resp.json())[&#39;status&#39;]] == expected_status</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not check compartment status for {self.parcel.shipment_number}&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=compartment_status_resp)</span>
+
+<div class="viewcode-block" id="Inpost.terminate_collect_session"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.terminate_collect_session">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">terminate_collect_session</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Terminates user session in inpost api service</span>
+
+<span class="sd">        :return: True if the user session is terminated</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;terminating collect session for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">terminate_collect_session</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">},</span>
+                                        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s1">&#39;sessionUuid&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">compartment_properties</span><span class="o">.</span><span class="n">session_uuid</span>
+                                        <span class="p">})</span> <span class="k">as</span> <span class="n">terminate_resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">terminate_resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;terminated collect session for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;could not terminate collect session for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">terminate_resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;could not terminate collect session for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">terminate_resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;could not terminate collect session for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">terminate_resp</span><span class="p">)</span></div>
+
+            <span class="c1"># if terminate_resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;terminated collect session for {self.parcel.shipment_number}&#39;)</span>
+            <span class="c1">#     return True</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(f&#39;could not terminate collect session for {self.parcel.shipment_number}&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=terminate_resp)</span>
+
+<div class="viewcode-block" id="Inpost.collect"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.collect">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shipment_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">parcel_obj</span><span class="p">:</span> <span class="n">Parcel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                      <span class="n">location</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simplified method to open compartment</span>
+
+<span class="sd">        :param shipment_number: Parcel&#39;s shipment number</span>
+<span class="sd">        :type shipment_number: int | str | None</span>
+<span class="sd">        :param parcel_obj: :class:`Parcel` object to obtain data from</span>
+<span class="sd">        :type parcel_obj: Parcel | None</span>
+<span class="sd">        :param location: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)</span>
+<span class="sd">        :type location: dict | None</span>
+<span class="sd">        :return: fetched parcels data</span>
+<span class="sd">        :rtype: bool</span>
+<span class="sd">        :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened</span>
+
+<span class="sd">        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;collecing parcel with shipment number </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">shipment_number</span> <span class="ow">and</span> <span class="n">parcel_obj</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;shipment_number and parcel_obj filled in&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SingleParamError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Fields shipment_number and parcel_obj filled! Choose one!&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">shipment_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">parcel_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parcel_obj</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parcel</span><span class="p">(</span><span class="n">shipment_number</span><span class="o">=</span><span class="n">shipment_number</span><span class="p">,</span> <span class="n">parse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">collect_compartment_properties</span><span class="p">(</span><span class="n">parcel_obj</span><span class="o">=</span><span class="n">parcel_obj</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">):</span>
+            <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_compartment</span><span class="p">():</span>
+                <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_compartment_status</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Inpost.close_compartment"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.close_compartment">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">close_compartment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks whether actual compartment status and expected one matches then notifies inpost api that compartment is closed</span>
+
+<span class="sd">        :return: True if compartment status is closed and successfully terminates user&#39;s session else False</span>
+<span class="sd">        :rtype: bool&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;closing compartment for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parcel</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_compartment_status</span><span class="p">(</span><span class="n">expected_status</span><span class="o">=</span><span class="n">CompartmentExpectedStatus</span><span class="o">.</span><span class="n">CLOSED</span><span class="p">):</span>
+            <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminate_collect_session</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Inpost.get_prices"><a class="viewcode-back" href="../../api.html#inpost.api.Inpost.get_prices">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_prices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetches prices for inpost services</span>
+
+<span class="sd">        :return: :class:`dict` of prices for inpost services</span>
+<span class="sd">        :rtype: dict</span>
+<span class="sd">        :raises NotAuthenticatedError: User not authenticated in inpost service</span>
+<span class="sd">        :raises UnauthorizedError: Unauthorized access to inpost services,</span>
+<span class="sd">        :raises NotFoundError: Phone number not found</span>
+<span class="sd">        :raises UnidentifiedAPIError: Unexpected thing happened&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;getting parcel prices&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;authorization token missing&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotAuthenticatedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s1">&#39;Not logged in&#39;</span><span class="p">)</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">parcel_prices</span><span class="p">,</span>
+                                       <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth_token</span><span class="p">})</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">:</span>
+                <span class="k">case</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;got parcel prices&#39;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="k">await</span> <span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                <span class="k">case</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not get parcel prices, unauthorized&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">UnauthorizedError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not get parcel prices, not found&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;could not get parcel prices, unhandled status&#39;</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">UnidentifiedAPIError</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="n">resp</span><span class="p">)</span></div></div>
+
+            <span class="c1"># if resp.status == 200:</span>
+            <span class="c1">#     self._log.debug(f&#39;got parcel prices&#39;)</span>
+            <span class="c1">#     return await resp.json()</span>
+            <span class="c1">#</span>
+            <span class="c1"># else:</span>
+            <span class="c1">#     self._log.error(&#39;could not get parcel prices&#39;)</span>
+            <span class="c1">#     raise UnidentifiedAPIError(reason=resp)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">inpost-python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Inpost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parcels.html">Parcels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">Exceptions</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Piotr Łoboda.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

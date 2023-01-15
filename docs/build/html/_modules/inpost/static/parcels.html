@@ -1,0 +1,614 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>inpost.static.parcels &#8212; inpost-python 0.0.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for inpost.static.parcels</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">qrcode</span>
+<span class="kn">from</span> <span class="nn">arrow</span> <span class="kn">import</span> <span class="n">get</span><span class="p">,</span> <span class="n">arrow</span>
+
+<span class="kn">from</span> <span class="nn">inpost.static.statuses</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Parcel"><a class="viewcode-back" href="../../../Parcel.html#inpost.static.parcels.Parcel">[docs]</a><span class="k">class</span> <span class="nc">Parcel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`inpost.api.Inpost` compartment properties</span>
+
+<span class="sd">    :param parcel_data: :class:`dict` containing all parcel data</span>
+<span class="sd">    :type parcel_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Parcel.__init__"><a class="viewcode-back" href="../../../Parcel.html#inpost.static.parcels.Parcel.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parcel_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shipment_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;shipmentNumber&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span><span class="p">:</span> <span class="n">ParcelShipmentType</span> <span class="o">=</span> <span class="n">ParcelShipmentType</span><span class="p">[</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;shipmentType&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_open_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;openCode&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;openCode&#39;</span> <span class="ow">in</span> <span class="n">parcel_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qr_code</span><span class="p">:</span> <span class="n">QRCode</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">QRCode</span><span class="p">(</span><span class="n">qrcode_data</span><span class="o">=</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;qrCode&#39;</span><span class="p">],</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span> \
+            <span class="k">if</span> <span class="s1">&#39;qrCode&#39;</span> <span class="ow">in</span> <span class="n">parcel_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stored_date</span><span class="p">:</span> <span class="n">arrow</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;storedDate&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;storedDate&#39;</span> <span class="ow">in</span> <span class="n">parcel_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pickup_date</span><span class="p">:</span> <span class="n">arrow</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;pickUpDate&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;pickUpDate&#39;</span> <span class="ow">in</span> <span class="n">parcel_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parcel_size</span><span class="p">:</span> <span class="n">ParcelLockerSize</span> <span class="o">|</span> <span class="n">ParcelCarrierSize</span> <span class="o">=</span> <span class="n">ParcelLockerSize</span><span class="p">[</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;parcelSize&#39;</span><span class="p">]]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span> <span class="k">else</span> <span class="n">ParcelCarrierSize</span><span class="p">[</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;parcelSize&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receiver</span><span class="p">:</span> <span class="n">Receiver</span> <span class="o">=</span> <span class="n">Receiver</span><span class="p">(</span><span class="n">receiver_data</span><span class="o">=</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;receiver&#39;</span><span class="p">],</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sender</span><span class="p">:</span> <span class="n">Sender</span> <span class="o">=</span> <span class="n">Sender</span><span class="p">(</span><span class="n">sender_data</span><span class="o">=</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;sender&#39;</span><span class="p">],</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pickup_point</span><span class="p">:</span> <span class="n">PickupPoint</span> <span class="o">=</span> <span class="n">PickupPoint</span><span class="p">(</span><span class="n">pickuppoint_data</span><span class="o">=</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;pickUpPoint&#39;</span><span class="p">],</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span> \
+            <span class="k">if</span> <span class="s1">&#39;pickUpPoint&#39;</span> <span class="ow">in</span> <span class="n">parcel_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multi_compartment</span><span class="p">:</span> <span class="n">MultiCompartment</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">MultiCompartment</span><span class="p">(</span>
+            <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;multiCompartment&#39;</span><span class="p">],</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span> <span class="k">if</span> <span class="s1">&#39;multiCompartment&#39;</span> <span class="ow">in</span> <span class="n">parcel_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_end_off_week_collection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;endOfWeekCollection&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">:</span> <span class="n">Operations</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">(</span><span class="n">operations_data</span><span class="o">=</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;operations&#39;</span><span class="p">],</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">:</span> <span class="n">ParcelStatus</span> <span class="o">=</span> <span class="n">ParcelStatus</span><span class="p">[</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_log</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EventLog</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">EventLog</span><span class="p">(</span><span class="n">eventlog_data</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+                                          <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;eventLog&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">avizo_transaction_status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;avizoTransactionStatus&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shared_to</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SharedTo</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">SharedTo</span><span class="p">(</span><span class="n">sharedto_data</span><span class="o">=</span><span class="n">person</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+                                          <span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;sharedTo&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ownership_status</span><span class="p">:</span> <span class="n">ParcelOwnership</span> <span class="o">=</span> <span class="n">ParcelOwnership</span><span class="p">[</span><span class="n">parcel_data</span><span class="p">[</span><span class="s1">&#39;ownershipStatus&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compartment_properties</span><span class="p">:</span> <span class="n">CompartmentProperties</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;created parcel with shipment number </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># log all unexpected things, so you can make an issue @github</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unexpected shipment_type: </span><span class="si">{</span><span class="n">parcel_data</span><span class="p">[</span><span class="s2">&quot;shipmentType&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parcel_size</span> <span class="o">==</span> <span class="n">ParcelCarrierSize</span><span class="o">.</span><span class="n">UNKNOWN</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">parcel_size</span> <span class="o">==</span> <span class="n">ParcelLockerSize</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unexpected parcel_size: </span><span class="si">{</span><span class="n">parcel_data</span><span class="p">[</span><span class="s2">&quot;parcelSize&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">ParcelStatus</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unexpected parcel status: </span><span class="si">{</span><span class="n">parcel_data</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ownership_status</span> <span class="o">==</span> <span class="n">ParcelOwnership</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unexpected ownership status: </span><span class="si">{</span><span class="n">parcel_data</span><span class="p">[</span><span class="s2">&quot;ownershipStatus&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Sender: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sender</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;Shipment number: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shipment_number</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;Status: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;Pickup point: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pickup_point</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">open_code</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an open code for :class:`Parcel`</span>
+
+<span class="sd">        :return: Open code for :class:`Parcel`</span>
+<span class="sd">        :rtype: str&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting open code&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got open code&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_code</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">generate_qr_image</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BytesIO</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a QR image for :class:`Parcel`</span>
+
+<span class="sd">        :return: QR image for :class:`Parcel`</span>
+<span class="sd">        :rtype: BytesIO&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;generating qr image&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got qr image&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qr_code</span><span class="o">.</span><span class="n">qr_image</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">compartment_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compartment properties for :class:`Parcel`</span>
+
+<span class="sd">        :return: Compartment properties for :class:`Parcel`</span>
+<span class="sd">        :rtype: CompartmentProperties&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting comparment properties&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got compartment properties&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compartment_properties</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@compartment_properties</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">compartment_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compartmentproperties_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set compartment properties for :class:`Parcel`</span>
+
+<span class="sd">        :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`Parcel`</span>
+<span class="sd">        :type compartmentproperties_data: CompartmentProperties&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;setting compartment properties with </span><span class="si">{</span><span class="n">compartmentproperties_data</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;compartment properties set&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compartment_properties</span> <span class="o">=</span> <span class="n">CompartmentProperties</span><span class="p">(</span><span class="n">compartmentproperties_data</span><span class="o">=</span><span class="n">compartmentproperties_data</span><span class="p">,</span>
+                                                                 <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">compartment_location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compartment location for :class:`Parcel`</span>
+
+<span class="sd">        :return: Compartment location for :class:`Parcel`</span>
+<span class="sd">        :rtype: CompartmentLocation&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting compartment location&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got compartment location&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compartment_properties</span><span class="o">.</span><span class="n">location</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># @compartment_location.setter</span>
+    <span class="c1"># def compartment_location(self, location_data):</span>
+    <span class="c1">#     &quot;&quot;&quot;Set compartment location for :class:`Parcel`</span>
+    <span class="c1">#     :param location_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`</span>
+    <span class="c1">#     :type location_data: CompartmentProperties&quot;&quot;&quot;</span>
+    <span class="c1">#     self._log.debug(&#39;setting compartment location&#39;)</span>
+    <span class="c1">#     if self.shipment_type == ParcelShipmentType.parcel:</span>
+    <span class="c1">#         self._log.debug(&#39;compartment location set&#39;)</span>
+    <span class="c1">#         self._compartment_properties.location = location_data</span>
+    <span class="c1">#</span>
+    <span class="c1">#     self._log.debug(&#39;wrong ParcelShipmentType&#39;)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">compartment_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompartmentActualStatus</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compartment status for :class:`Parcel`</span>
+
+<span class="sd">        :return: Compartment status for :class:`Parcel`</span>
+<span class="sd">        :rtype: CompartmentActualStatus&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting compartment status&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got compartment status&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compartment_properties</span><span class="o">.</span><span class="n">status</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># @compartment_status.setter</span>
+    <span class="c1"># def compartment_status(self, status):</span>
+    <span class="c1">#     self._log.debug(&#39;setting compartment status&#39;)</span>
+    <span class="c1">#     if self.shipment_type == ParcelShipmentType.parcel:</span>
+    <span class="c1">#         self._log.debug(&#39;compartment status set&#39;)</span>
+    <span class="c1">#         self._compartment_properties.status = status</span>
+    <span class="c1">#</span>
+    <span class="c1">#     self._log.debug(&#39;wrong ParcelShipmentType&#39;)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">compartment_open_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compartment open data for :class:`Parcel`</span>
+
+<span class="sd">        :return: dict containing compartment open data for :class:`Parcel`</span>
+<span class="sd">        :rtype: dict&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting compartment open data&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got compartment open data&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;shipmentNumber&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_number</span><span class="p">,</span>
+                <span class="s1">&#39;openCode&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_code</span><span class="p">,</span>
+                <span class="s1">&#39;receiverPhoneNumber&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">receiver</span><span class="o">.</span><span class="n">phone_number</span>
+            <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mocked_location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a mocked location for :class:`Parcel`</span>
+
+<span class="sd">        :return: dict containing mocked location for :class:`Parcel`</span>
+<span class="sd">        :rtype: dict&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting mocked location&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shipment_type</span> <span class="o">==</span> <span class="n">ParcelShipmentType</span><span class="o">.</span><span class="n">parcel</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;got mocked location&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pickup_point</span><span class="o">.</span><span class="n">latitude</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.00005</span><span class="p">,</span> <span class="mf">0.00005</span><span class="p">),</span> <span class="mi">6</span><span class="p">),</span>
+                <span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pickup_point</span><span class="o">.</span><span class="n">longitude</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.00005</span><span class="p">,</span> <span class="mf">0.00005</span><span class="p">),</span> <span class="mi">6</span><span class="p">),</span>
+                <span class="s1">&#39;accuracy&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;wrong ParcelShipmentType&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Receiver"><a class="viewcode-back" href="../../../Receiver.html#inpost.static.parcels.Receiver">[docs]</a><span class="k">class</span> <span class="nc">Receiver</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` receiver</span>
+
+<span class="sd">    :param receiver_data: :class:`dict` containing sender data for :class:`Parcel`</span>
+<span class="sd">    :type receiver_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Receiver.__init__"><a class="viewcode-back" href="../../../Receiver.html#inpost.static.parcels.Receiver.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">receiver_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">receiver_data</span><span class="p">[</span><span class="s1">&#39;email&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">receiver_data</span><span class="p">[</span><span class="s1">&#39;phoneNumber&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">receiver_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Sender"><a class="viewcode-back" href="../../../Sender.html#inpost.static.parcels.Sender">[docs]</a><span class="k">class</span> <span class="nc">Sender</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` sender</span>
+
+<span class="sd">    :param sender_data: :class:`dict` containing sender data for :class:`Parcel`</span>
+<span class="sd">    :type sender_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Sender.__init__"><a class="viewcode-back" href="../../../Sender.html#inpost.static.parcels.Sender.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sender_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sender_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sender_name</span></div>
+
+
+<div class="viewcode-block" id="PickupPoint"><a class="viewcode-back" href="../../../PickupPoint.html#inpost.static.parcels.PickupPoint">[docs]</a><span class="k">class</span> <span class="nc">PickupPoint</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` pickup point</span>
+
+<span class="sd">    :param pickuppoint_data: :class:`dict` containing pickup point data for :class:`Parcel`</span>
+<span class="sd">    :type pickuppoint_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PickupPoint.__init__"><a class="viewcode-back" href="../../../PickupPoint.html#inpost.static.parcels.PickupPoint.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pickuppoint_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">][</span><span class="s1">&#39;latitude&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">longitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">][</span><span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;locationDescription&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opening_hours</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;openingHours&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;addressDetails&#39;</span><span class="p">][</span><span class="s1">&#39;postCode&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">city</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;addressDetails&#39;</span><span class="p">][</span><span class="s1">&#39;city&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">province</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;addressDetails&#39;</span><span class="p">][</span><span class="s1">&#39;province&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">street</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;addressDetails&#39;</span><span class="p">][</span><span class="s1">&#39;street&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">building_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;addressDetails&#39;</span><span class="p">][</span><span class="s1">&#39;buildingNumber&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">virtual</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;virtual&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">point_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;pointType&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ParcelDeliveryType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ParcelDeliveryType</span><span class="p">[</span><span class="n">data</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location_round_the_clock</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;location247&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;doubled&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;imageUrl&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">easy_access_zone</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;easyAccessZone&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">air_sensor</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">pickuppoint_data</span><span class="p">[</span><span class="s1">&#39;airSensor&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ParcelDeliveryType</span><span class="o">.</span><span class="n">UNKNOWN</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown delivery type: </span><span class="si">{</span><span class="n">pickuppoint_data</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">location</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a mocked location for :class:`PickupPoint`</span>
+
+<span class="sd">        :return: tuple containing location for :class:`PickupPoint`</span>
+<span class="sd">        :rtype: tuple&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting location&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">longitude</span></div>
+
+
+<div class="viewcode-block" id="MultiCompartment"><a class="viewcode-back" href="../../../MultiCompartment.html#inpost.static.parcels.MultiCompartment">[docs]</a><span class="k">class</span> <span class="nc">MultiCompartment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` `multicompartment`</span>
+
+<span class="sd">    :param multicompartment_data: :class:`dict` containing multicompartment data for :class:`Parcel`</span>
+<span class="sd">    :type multicompartment_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MultiCompartment.__init__"><a class="viewcode-back" href="../../../MultiCompartment.html#inpost.static.parcels.MultiCompartment.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">multicompartment_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuid</span> <span class="o">=</span> <span class="n">multicompartment_data</span><span class="p">[</span><span class="s1">&#39;uuid&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shipment_numbers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">multicompartment_data</span><span class="p">[</span><span class="s1">&#39;shipmentNumbers&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="s1">&#39;shipmentNumbers&#39;</span> <span class="ow">in</span> <span class="n">multicompartment_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">presentation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">multicompartment_data</span><span class="p">[</span><span class="s1">&#39;presentation&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">multicompartment_data</span><span class="p">[</span><span class="s1">&#39;collected&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Operations"><a class="viewcode-back" href="../../../Operations.html#inpost.static.parcels.Operations">[docs]</a><span class="k">class</span> <span class="nc">Operations</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` `operations`</span>
+
+<span class="sd">    :param operations_data: :class:`dict` containing operations data for :class:`Parcel`</span>
+<span class="sd">    :type operations_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Operations.__init__"><a class="viewcode-back" href="../../../Operations.html#inpost.static.parcels.Operations.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operations_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manual_archive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;manualArchive&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auto_archivable_since</span><span class="p">:</span> <span class="n">arrow</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span>
+            <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;autoArchivableSince&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;autoArchivableSince&#39;</span> <span class="ow">in</span> <span class="n">operations_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;delete&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;collect&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expand_avizo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;expandAvizo&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">highlight</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;highlight&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_until</span><span class="p">:</span> <span class="n">arrow</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;refreshUntil&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_easy_access_zone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;requestEasyAccessZone&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_voicebot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;voicebot&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">can_share_to_observe</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;canShareToObserve&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">can_share_open_code</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;canShareOpenCode&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">can_share_parcel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">operations_data</span><span class="p">[</span><span class="s1">&#39;canShareParcel&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="EventLog"><a class="viewcode-back" href="../../../EventLog.html#inpost.static.parcels.EventLog">[docs]</a><span class="k">class</span> <span class="nc">EventLog</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` single eventlog</span>
+
+<span class="sd">    :param eventlog_data: :class:`dict` containing single eventlog data for :class:`Parcel`</span>
+<span class="sd">    :type eventlog_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EventLog.__init__"><a class="viewcode-back" href="../../../EventLog.html#inpost.static.parcels.EventLog.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eventlog_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">eventlog_data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">ParcelStatus</span> <span class="o">=</span> <span class="n">ParcelStatus</span><span class="p">[</span><span class="n">eventlog_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">:</span> <span class="n">arrow</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">eventlog_data</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">ParcelStatus</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown parcel status: </span><span class="si">{</span><span class="n">eventlog_data</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SharedTo"><a class="viewcode-back" href="../../../SharedTo.html#inpost.static.parcels.SharedTo">[docs]</a><span class="k">class</span> <span class="nc">SharedTo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` single shared to</span>
+
+<span class="sd">    :param sharedto_data: :class:`dict` containing shared to data for :class:`Parcel`</span>
+<span class="sd">    :type sharedto_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SharedTo.__init__"><a class="viewcode-back" href="../../../SharedTo.html#inpost.static.parcels.SharedTo.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sharedto_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uuid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sharedto_data</span><span class="p">[</span><span class="s1">&#39;uuid&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">sharedto_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phone_number</span> <span class="o">=</span> <span class="n">sharedto_data</span><span class="p">[</span><span class="s1">&#39;phoneNumber&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QRCode"><a class="viewcode-back" href="../../../QRCode.html#inpost.static.parcels.QRCode">[docs]</a><span class="k">class</span> <span class="nc">QRCode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` QRCode</span>
+
+<span class="sd">    :param qrcode_data: :class:`str` containing qrcode data for :class:`Parcel`</span>
+<span class="sd">    :type qrcode_data: str</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QRCode.__init__"><a class="viewcode-back" href="../../../QRCode.html#inpost.static.parcels.QRCode.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qrcode_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qr_code</span> <span class="o">=</span> <span class="n">qrcode_data</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">qr_image</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BytesIO</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a generated QR image for :class:`QRCode`</span>
+
+<span class="sd">        :return: QR Code image</span>
+<span class="sd">        :rtype: BytesIO&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;generating qr image&#39;</span><span class="p">)</span>
+        <span class="n">qr</span> <span class="o">=</span> <span class="n">qrcode</span><span class="o">.</span><span class="n">QRCode</span><span class="p">(</span>
+            <span class="n">version</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">error_correction</span><span class="o">=</span><span class="n">qrcode</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">ERROR_CORRECT_H</span><span class="p">,</span>
+            <span class="n">box_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+            <span class="n">border</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+            <span class="n">mask_pattern</span><span class="o">=</span><span class="mi">5</span>
+        <span class="p">)</span>
+
+        <span class="n">qr</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_qr_code</span><span class="p">)</span>
+        <span class="n">qr</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">img1</span> <span class="o">=</span> <span class="n">qr</span><span class="o">.</span><span class="n">make_image</span><span class="p">(</span><span class="n">fill_color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">back_color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
+        <span class="n">bio</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">bio</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;qr.png&#39;</span>
+        <span class="n">img1</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">bio</span><span class="p">,</span> <span class="s1">&#39;PNG&#39;</span><span class="p">)</span>
+        <span class="n">bio</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;generated qr image&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bio</span></div>
+
+
+<div class="viewcode-block" id="CompartmentLocation"><a class="viewcode-back" href="../../../CompartmentLocation.html#inpost.static.parcels.CompartmentLocation">[docs]</a><span class="k">class</span> <span class="nc">CompartmentLocation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`CompartmentProperties` compartment location</span>
+
+<span class="sd">    :param compartmentlocation_data: :class:`dict` containing compartment location data for :class:`Parcel`</span>
+<span class="sd">    :type compartmentlocation_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CompartmentLocation.__init__"><a class="viewcode-back" href="../../../CompartmentLocation.html#inpost.static.parcels.CompartmentLocation.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compartmentlocation_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;compartment&#39;</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;compartment&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">][</span><span class="s1">&#39;side&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;compartment&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">][</span><span class="s1">&#39;column&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">row</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;compartment&#39;</span><span class="p">][</span><span class="s1">&#39;location&#39;</span><span class="p">][</span><span class="s1">&#39;row&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_compartment_waiting_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;openCompartmentWaitingTime&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;actionTime&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confirm_action_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">compartmentlocation_data</span><span class="p">[</span><span class="s1">&#39;confirmActionTime&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CompartmentProperties"><a class="viewcode-back" href="../../../CompartmentProperties.html#inpost.static.parcels.CompartmentProperties">[docs]</a><span class="k">class</span> <span class="nc">CompartmentProperties</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representation of :class:`Parcel` compartment properties</span>
+
+<span class="sd">    :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`Parcel`</span>
+<span class="sd">    :type compartmentproperties_data: dict</span>
+<span class="sd">    :param logger: :class:`logging.Logger` parent instance</span>
+<span class="sd">    :type logger: logging.Logger&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CompartmentProperties.__init__"><a class="viewcode-back" href="../../../CompartmentProperties.html#inpost.static.parcels.CompartmentProperties.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compartmentproperties_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor method&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session_uuid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">compartmentproperties_data</span><span class="p">[</span><span class="s1">&#39;sessionUuid&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session_expiration_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">compartmentproperties_data</span><span class="p">[</span><span class="s1">&#39;sessionExpirationTime&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_location</span><span class="p">:</span> <span class="n">CompartmentLocation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">:</span> <span class="n">CompartmentActualStatus</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">getChild</span><span class="p">(</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">session_uuid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a session unique identified for :class:`CompartmentProperties`</span>
+
+<span class="sd">        :return: string containing session unique identified for :class:`CompartmentProperties`</span>
+<span class="sd">        :rtype: str&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting session uuid&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session_uuid</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compartment location for :class:`CompartmentProperties`</span>
+
+<span class="sd">        :return: compartment location for :class:`CompartmentProperties`</span>
+<span class="sd">        :rtype: str&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting location&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_location</span>
+
+    <span class="nd">@location</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set a compartment location for :class:`CompartmentProperties`</span>
+
+<span class="sd">        :param location_data: dict containing compartment location data for :class:`CompartmentProperties`</span>
+<span class="sd">        :type location_data: dict&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;setting location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_location</span> <span class="o">=</span> <span class="n">CompartmentLocation</span><span class="p">(</span><span class="n">location_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a compartment status for :class:`CompartmentProperties`</span>
+
+<span class="sd">        :return: compartment location for :class:`CompartmentProperties`</span>
+<span class="sd">        :rtype: CompartmentActualStatus&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;getting status&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span></div>
+
+    <span class="c1"># @status.setter</span>
+    <span class="c1"># def status(self, status_data: str | CompartmentActualStatus):</span>
+    <span class="c1">#     self._log.debug(&#39;setting status&#39;)</span>
+    <span class="c1">#     self._status = status_data if isinstance(status_data, CompartmentActualStatus) \</span>
+    <span class="c1">#         else CompartmentActualStatus[status_data]</span>
+    <span class="c1">#</span>
+    <span class="c1">#     if self._status == CompartmentActualStatus.UNKNOWN and isinstance(status_data, str):</span>
+    <span class="c1">#         self._log.debug(f&#39;unexpected compartment actual status: {status_data}&#39;)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">inpost-python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Inpost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../parcels.html">Parcels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">Exceptions</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Piotr Łoboda.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
