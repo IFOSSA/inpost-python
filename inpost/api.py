@@ -6,7 +6,10 @@ from inpost.static import *
 
 
 class Inpost:
+    """Python representation of an Inpost app. Essentially implements methods to manage all incoming parcels"""
+
     def __init__(self):
+        """Constructor method"""
         self.phone_number: str | None = None
         self.sms_code: str | None = None
         self.auth_token: str | None = None
@@ -18,7 +21,28 @@ class Inpost:
     def __repr__(self):
         return f'Phone number: {self.phone_number}\nToken: {self.auth_token}'
 
-    async def set_phone_number(self, phone_number: str) -> bool | None:
+    @classmethod
+    async def from_phone_number(cls, phone_number: str | int):
+        """`Classmethod` to initialize :class:`Inpost` object with phone number
+        :param phone_number: User's Inpost phone number
+        :type phone_number: str, int"""
+        if isinstance(phone_number, int):
+            phone_number = str(phone_number)
+        inp = cls()
+        await inp.set_phone_number(phone_number=phone_number)
+        inp._log.info(f'initialized by from_phone_number')
+        return inp
+
+    async def set_phone_number(self, phone_number: str | int) -> bool:
+        """Set :class:`Inpost` phone number required for verification
+        :param phone_number: User's Inpost phone number
+        :type phone_number: str, int
+        :return: True if `Inpost.phone_number` is set
+        :rtype: bool
+        :raises PhoneNumberError: Wrong phone number format"""
+        if isinstance(phone_number, int):
+            phone_number = str(phone_number)
+
         if len(phone_number) == 9 and phone_number.isdigit():
             self._log = logging.getLogger(f'{__class__.__name__}.{phone_number}')
             self._log.setLevel(level=logging.DEBUG)
@@ -28,7 +52,15 @@ class Inpost:
 
         raise PhoneNumberError(f'Wrong phone number format: {phone_number} (should be 9 digits)')
 
-    async def send_sms_code(self) -> bool | None:
+    async def send_sms_code(self) -> bool:
+        """Sends sms code to `Inpost.phone_number`
+        :return: True if sms code sent
+        :rtype: bool
+        :raises PhoneNumberError: Missing phone number
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected things happened
+        """
         if not self.phone_number:  # can't log it cuz if there's no phone number no logger initialized @shrug
             raise PhoneNumberError('Phone number missing')
 
@@ -45,12 +77,12 @@ class Inpost:
                     self._log.error(f'could not send sms code, unauthorized')
                     raise UnauthorizedError(reason=phone)
                 case 404:
-                    self._log.error(f'could not sent sms code, bad request')
+                    self._log.error(f'could not send sms code, not found')
                     raise NotFoundError(reason=phone)
                 case _:
-                    self._log.error(f'could not sent sms code, unhandled status')
+                    self._log.error(f'could not send sms code, unhandled status')
 
-            raise SmsCodeError(reason=phone)
+            raise UnidentifiedAPIError(reason=phone)
 
             # if phone.status == 200:
             #     self._log.debug(f'sms code sent')
@@ -59,9 +91,22 @@ class Inpost:
             #     self._log.error(f'could not sent sms code')
             #     raise PhoneNumberError(reason=phone)
 
-    async def confirm_sms_code(self, sms_code: str) -> bool | None:
+    async def confirm_sms_code(self, sms_code: str | int) -> bool:
+        """Confirms sms code sent to `Inpost.phone_number` and fetches tokens
+        :param sms_code: sms code sent to `Inpost.phone_number` device
+        :type sms_code: str, int
+        :return: True if sms code gets confirmed and tokens fetched
+        :rtype: bool
+        :raises SmsCodeError: Wrong sms code format
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
         if not self.phone_number:  # can't log it cuz if there's no phone number no logger initialized @shrug
             raise PhoneNumberError('Phone number missing')
+
+        if isinstance(sms_code, int):
+            sms_code = str(sms_code)
 
         if len(sms_code) != 6 or not sms_code.isdigit():
             raise SmsCodeError(reason=f'Wrong sms code format: {sms_code} (should be 6 digits)')
@@ -86,12 +131,12 @@ class Inpost:
                     self._log.error(f'could not confirm sms code, unauthorized')
                     raise UnauthorizedError(reason=confirmation)
                 case 404:
-                    self._log.error(f'could not confirm sms code, bad request')
+                    self._log.error(f'could not confirm sms code, not found')
                     raise NotFoundError(reason=confirmation)
                 case _:
                     self._log.error(f'could not confirm sms code, unhandled status')
 
-            raise SmsCodeError(reason=confirmation)
+            raise UnidentifiedAPIError(reason=confirmation)
 
             # if confirmation.status == 200:
             #     resp = await confirmation.json()
@@ -104,7 +149,15 @@ class Inpost:
             #     self._log.error(f'could not confirm sms code')
             #     raise SmsCodeConfirmationError(reason=confirmation)
 
-    async def refresh_token(self) -> bool | None:
+    async def refresh_token(self) -> bool:
+        """Refreshes authorization token using refresh token
+        :return: True if `Inpost.auth_token` gets refreshed
+        :rtype: bool
+        :raises RefreshTokenError: Missing refresh token
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
         self._log.info(f'refreshing token')
 
         if not self.refr_token:
@@ -131,12 +184,12 @@ class Inpost:
                     self._log.error(f'could not refresh token, unauthorized')
                     raise UnauthorizedError(reason=confirmation)
                 case 404:
-                    self._log.error(f'could not refresh token, bad request')
+                    self._log.error(f'could not refresh token, not found')
                     raise NotFoundError(reason=confirmation)
                 case _:
                     self._log.error(f'could not refresh token, unhandled status')
 
-            raise RefreshTokenError(reason=confirmation)
+            raise UnidentifiedAPIError(reason=confirmation)
 
             # if confirmation.status == 200:
             #     resp = await confirmation.json()
@@ -151,7 +204,14 @@ class Inpost:
             #     self._log.error(f'could not refresh token')
             #     raise RefreshTokenException(reason=confirmation)
 
-    async def logout(self) -> bool | None:
+    async def logout(self) -> bool:
+        """Logouts user from inpost api service
+        :return: True if the user is logged out
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info(f'logging out')
 
         if not self.auth_token:
@@ -172,7 +232,7 @@ class Inpost:
                     self._log.error('could not log out, unauthorized')
                     raise UnauthorizedError(reason=resp)
                 case 404:
-                    self._log.error('could not log out, bad request')
+                    self._log.error('could not log out, not found')
                     raise NotFoundError(reason=resp)
                 case _:
                     self._log.error('could not log out, unhandled status')
@@ -191,6 +251,9 @@ class Inpost:
             #     raise UnidentifiedAPIError(reason=resp)
 
     async def disconnect(self) -> bool:
+        """Simplified method to logout and close user's session
+        :return: True if user is logged out and session is closed else False
+        :raises NotAuthenticatedError: User not authenticated in inpost service"""
         self._log.info(f'disconnecting')
         if not self.auth_token:
             self._log.error(f'authorization token missing')
@@ -205,6 +268,17 @@ class Inpost:
         return False
 
     async def get_parcel(self, shipment_number: int | str, parse=False) -> dict | Parcel:
+        """Fetches single parcel from provided shipment number
+        :param shipment_number: Parcel's shipment number
+        :type shipment_number: int, str
+        :param parse: if set to True method will return :class:`Parcel` else :class:`dict`
+        :type parse: bool
+        :return: fetched parcel data
+        :rtype: dict, Parcel
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info(f'getting parcel with shipment number: {shipment_number}')
 
         if not self.auth_token:
@@ -222,7 +296,7 @@ class Inpost:
                     self._log.error(f'could not get parcel with shipment number {shipment_number}, unauthorized')
                     raise UnauthorizedError(reason=resp)
                 case 404:
-                    self._log.error(f'could not get parcel with shipment number {shipment_number}, bad request')
+                    self._log.error(f'could not get parcel with shipment number {shipment_number}, not found')
                     raise NotFoundError(reason=resp)
                 case _:
                     self._log.error(f'could not get parcel with shipment number {shipment_number}, unhandled status')
@@ -243,6 +317,26 @@ class Inpost:
                           shipment_type: ParcelShipmentType | List[ParcelShipmentType] | None = None,
                           parcel_size: ParcelLockerSize | ParcelCarrierSize | None = None,
                           parse: bool = False) -> List[dict] | List[Parcel]:
+        """Fetches all available parcels for set `Inpost.phone_number and optionally filters them`
+        :param parcel_type: Parcel type (e.g. received, sent, returned)
+        :type parcel_type: ParcelType
+        :param status: status that each fetched parcels has to be in
+        :type status: ParcelStatus, list[ParcelStatus], None
+        :param pickup_point: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)
+        :type pickup_point: str, list[str], None
+        :param shipment_type: Fetched parcels have to be shipped that way
+        :type shipment_type: ParcelShipmentType, list[ParcelShipmentType], None
+        :param parcel_size: Fetched parcels have to be this size
+        :type parcel_size: ParcelLockerSize, ParcelCarrierSize, None
+        :param parse: if set to True method will return list[:class:`Parcel`] else list[:class:`dict`]
+        :type parse: bool
+        :return: fetched parcels data
+        :rtype: list[dict], list[Parcel]
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises ParcelTypeError: Unknown parcel type selected
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info('getting parcels')
 
         if not self.auth_token:
@@ -312,7 +406,7 @@ class Inpost:
                     self._log.error(f'could not get parcels, unauthorized')
                     raise UnauthorizedError(reason=resp)
                 case 404:
-                    self._log.error(f'could not get parcels, bad request')
+                    self._log.error(f'could not get parcels, not found')
                     raise NotFoundError(reason=resp)
                 case _:
                     self._log.error(f'could not get parcels, unhandled status')
@@ -361,9 +455,34 @@ class Inpost:
             #     self._log.error(f'could not get parcels')
             #     raise UnidentifiedAPIError(reason=resp)
 
-    async def collect_compartment_properties(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
-                                             location: dict | None = None) -> bool:
+    async def collect_compartment_properties(self, shipment_number: str | int | None = None,
+                                             parcel_obj: Parcel | None = None, location: dict | None = None) -> bool:
+        """Validates sent data and fetches required compartment properties for opening
+        :param shipment_number: Parcel's shipment number
+        :type shipment_number: int, str, None
+        :param parcel_obj: :class:`Parcel` object to obtain data from
+        :type parcel_obj: Parcel, None
+        :param location: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)
+        :type location: dict, None
+        :return: fetched parcels data
+        :rtype: bool
+        :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened
+
+        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!"""
+
         self._log.info(f'collecting compartment properties for {shipment_number}')
+
+        if shipment_number and parcel_obj:
+            self._log.error(f'shipment_number and parcel_obj filled in')
+            raise SingleParamError(reason='Fields shipment_number and parcel_obj filled in! Choose one!')
+
+        if not self.auth_token:
+            self._log.error(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
 
         if shipment_number is not None and parcel_obj is None:
             self._log.debug(f'parcel_obj not provided, getting from shipment number {shipment_number}')
@@ -385,7 +504,7 @@ class Inpost:
                     self._log.error(f'could not collect compartment properties for {shipment_number}, unauthorized')
                     raise UnauthorizedError(reason=collect_resp)
                 case 404:
-                    self._log.error(f'could not collect compartment properties for {shipment_number}, bad request')
+                    self._log.error(f'could not collect compartment properties for {shipment_number}, not found')
                     raise NotFoundError(reason=collect_resp)
                 case _:
                     self._log.error(f'could not collect compartment properties for {shipment_number}, unhandled status')
@@ -403,6 +522,13 @@ class Inpost:
             #     raise UnidentifiedAPIError(reason=collect_resp)
 
     async def open_compartment(self):
+        """Opens compartment for `Inpost.parcel` object
+        :return: True if compartment gets opened
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info(f'opening compartment for {self.parcel.shipment_number}')
 
         if not self.auth_token:
@@ -423,7 +549,7 @@ class Inpost:
                     self._log.error(f'could not open compartment for {self.parcel.shipment_number}, unauthorized')
                     raise UnauthorizedError(reason=compartment_open_resp)
                 case 404:
-                    self._log.error(f'could not open compartment for {self.parcel.shipment_number}, bad request')
+                    self._log.error(f'could not open compartment for {self.parcel.shipment_number}, not found')
                     raise NotFoundError(reason=compartment_open_resp)
                 case _:
                     self._log.error(f'could not open compartment for {self.parcel.shipment_number}, unhandled status')
@@ -441,11 +567,24 @@ class Inpost:
 
     async def check_compartment_status(self,
                                        expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED):
+        """Checks and compare compartment status (e.g. opened, closed) with expected status
+        :param expected_status: Compartment expected status
+        :type expected_status: CompartmentExpectedStatus
+        :return: True if actual status equals expected status else False
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info(f'checking compartment status for {self.parcel.shipment_number}')
 
         if not self.auth_token:
             self._log.debug(f'authorization token missing')
             raise NotAuthenticatedError(reason='Not logged in')
+
+        if not self.parcel:
+            self._log.debug(f'parcel missing')
+            raise NoParcelError(reason='Parcel is not set')
 
         async with await self.sess.post(url=compartment_status,
                                         headers={'Authorization': self.auth_token},
@@ -459,13 +598,15 @@ class Inpost:
                     return CompartmentExpectedStatus[
                         (await compartment_status_resp.json())['status']] == expected_status
                 case 401:
-                    self._log.error(f'could not check compartment status for {self.parcel.shipment_number}, unauthorized')
+                    self._log.error(
+                        f'could not check compartment status for {self.parcel.shipment_number}, unauthorized')
                     raise UnauthorizedError(reason=compartment_status_resp)
                 case 404:
-                    self._log.error(f'could not check compartment status for {self.parcel.shipment_number}, bad request')
+                    self._log.error(f'could not check compartment status for {self.parcel.shipment_number}, not found')
                     raise NotFoundError(reason=compartment_status_resp)
                 case _:
-                    self._log.error(f'could not check compartment status for {self.parcel.shipment_number}, unhandled status')
+                    self._log.error(
+                        f'could not check compartment status for {self.parcel.shipment_number}, unhandled status')
 
             raise UnidentifiedAPIError(reason=compartment_status_resp)
 
@@ -477,6 +618,13 @@ class Inpost:
             #     raise UnidentifiedAPIError(reason=compartment_status_resp)
 
     async def terminate_collect_session(self):
+        """Terminates user session in inpost api service
+        :return: True if the user session is terminated
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info(f'terminating collect session for {self.parcel.shipment_number}')
 
         if not self.auth_token:
@@ -493,13 +641,15 @@ class Inpost:
                     self._log.debug(f'terminated collect session for {self.parcel.shipment_number}')
                     return True
                 case 401:
-                    self._log.error(f'could not terminate collect session for {self.parcel.shipment_number}, unauthorized')
+                    self._log.error(
+                        f'could not terminate collect session for {self.parcel.shipment_number}, unauthorized')
                     raise UnauthorizedError(reason=terminate_resp)
                 case 404:
-                    self._log.error(f'could not terminate collect session for {self.parcel.shipment_number}, bad request')
+                    self._log.error(f'could not terminate collect session for {self.parcel.shipment_number}, not found')
                     raise NotFoundError(reason=terminate_resp)
                 case _:
-                    self._log.error(f'could not terminate collect session for {self.parcel.shipment_number}, unhandled status')
+                    self._log.error(
+                        f'could not terminate collect session for {self.parcel.shipment_number}, unhandled status')
 
             raise UnidentifiedAPIError(reason=terminate_resp)
 
@@ -512,7 +662,28 @@ class Inpost:
 
     async def collect(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
                       location: dict | None = None) -> bool:
+        """Simplified method to open compartment
+        :param shipment_number: Parcel's shipment number
+        :type shipment_number: int, str, None
+        :param parcel_obj: :class:`Parcel` object to obtain data from
+        :type parcel_obj: Parcel, None
+        :param location: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)
+        :type location: dict, None
+        :return: fetched parcels data
+        :rtype: bool
+        :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened
+
+        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!"""
+
         self._log.info(f'collecing parcel with shipment number {self.parcel.shipment_number}')
+
+        if shipment_number and parcel_obj:
+            self._log.error(f'shipment_number and parcel_obj filled in')
+            raise SingleParamError(reason='Fields shipment_number and parcel_obj filled! Choose one!')
 
         if not self.auth_token:
             self._log.error(f'authorization token missing')
@@ -529,6 +700,9 @@ class Inpost:
         return False
 
     async def close_compartment(self) -> bool:
+        """Checks whether actual compartment status and expected one matches then notifies inpost api that compartment is closed
+        :return: True if compartment status is closed and successfully terminates user's session else False
+        :rtype: bool"""
         self._log.info(f'closing compartment for {self.parcel.shipment_number}')
 
         if await self.check_compartment_status(expected_status=CompartmentExpectedStatus.CLOSED):
@@ -538,6 +712,13 @@ class Inpost:
         return False
 
     async def get_prices(self) -> dict:
+        """Fetches prices for inpost services
+        :return: :class:`dict` of prices for inpost services
+        :rtype: dict
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
         self._log.info(f'getting parcel prices')
 
         if not self.auth_token:
@@ -554,7 +735,7 @@ class Inpost:
                     self._log.error('could not get parcel prices, unauthorized')
                     raise UnauthorizedError(reason=resp)
                 case 404:
-                    self._log.error('could not get parcel prices, bad request')
+                    self._log.error('could not get parcel prices, not found')
                     raise NotFoundError(reason=resp)
                 case _:
                     self._log.error('could not get parcel prices, unhandled status')

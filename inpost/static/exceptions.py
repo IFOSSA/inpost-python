@@ -1,14 +1,14 @@
 from typing import Any
-from statuses import ParcelType
-from parcels import Parcel
-from inpost.api import Inpost
+from .statuses import ParcelType
+from .parcels import Parcel
 
 
 # ------------------ Base ------------------- #
 class BaseInpostError(Exception):
     """Base exception to inherit from
-    :param reason: reason of :class:`BaseInpostError` happening
+    :param reason: reason of :exc:`BaseInpostError` happening
     :type reason: typing.Any"""
+
     def __init__(self, reason):
         """Constructor method"""
         super().__init__(reason)
@@ -24,6 +24,11 @@ class BaseInpostError(Exception):
 
 class ParcelTypeError(BaseInpostError):
     """Is raised when expected :class:`ParcelType` does not match with actual one"""
+    pass
+
+
+class NoParcelError(BaseInpostError):
+    """Is raised when no parcel is set in :class:`Parcel`"""
     pass
 
 
@@ -75,6 +80,11 @@ class UnidentifiedAPIError(BaseInpostError):
 
 # ----------------- Other ----------------- #
 class UserLocationError(BaseInpostError):
+    pass
+
+
+class SingleParamError(BaseInpostError):
+    """Is raised when only one param must be filled in but got more"""
     pass
 
 

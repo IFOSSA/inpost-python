@@ -16,17 +16,30 @@ class Meta(EnumMeta):  # temporary handler for unexpected keys in enums
 
 
 class ParcelBase(Enum, metaclass=Meta):
+    """Base :class:`Enum` class to derive from"""
     def __gt__(self, other):
-        ...
+        if isinstance(other, ParcelBase):
+            ...
+
+        return False
 
     def __ge__(self, other):
-        ...
+        if isinstance(other, ParcelBase):
+            ...
+
+        return False
 
     def __le__(self, other):
-        ...
+        if isinstance(other, ParcelBase):
+            ...
+
+        return False
 
     def __lt__(self, other):
-        ...
+        if isinstance(other, ParcelBase):
+            ...
+
+        return False
 
     def __eq__(self, other):
         if isinstance(other, ParcelBase):
@@ -36,6 +49,7 @@ class ParcelBase(Enum, metaclass=Meta):
 
 
 class ParcelCarrierSize(ParcelBase):
+    """:class:`Enum` that holds parcel size for carrier shipment type"""
     UNKNOWN = 'UNKNOWN DATA'
     A = '8x38x64'
     B = '19x38x64'
@@ -44,8 +58,8 @@ class ParcelCarrierSize(ParcelBase):
     OTHER = 'UNKNOWN DIMENSIONS'
 
 
-# @add_invalid
 class ParcelLockerSize(ParcelBase):
+    """:class:`Enum` that holds parcel size for parcel locker shipment type"""
     UNKNOWN = 'UNKNOWN DATA'
     A = '8x38x64'
     B = '19x38x64'
@@ -53,6 +67,7 @@ class ParcelLockerSize(ParcelBase):
 
 
 class ParcelDeliveryType(ParcelBase):
+    """:class:`Enum` that holds parcel delivery types"""
     UNKNOWN = 'UNKNOWN DATA'
     parcel_locker = 'Paczkomat'
     courier = 'Kurier'
@@ -60,6 +75,7 @@ class ParcelDeliveryType(ParcelBase):
 
 
 class ParcelShipmentType(ParcelBase):
+    """:class:`Enum` that holds parcel shipment types"""
     UNKNOWN = 'UNKNOWN DATA'
     parcel = 'Paczkomat'
     courier = 'Kurier'
@@ -75,6 +91,7 @@ class ParcelAdditionalInsurance(ParcelBase):
 
 
 class ParcelType(ParcelBase):
+    """:class:`Enum` that holds parcel types"""
     UNKNOWN = 'UNKNOWN DATA'
     TRACKED = 'Przychodzące'
     SENT = 'Wysłane'
@@ -82,6 +99,7 @@ class ParcelType(ParcelBase):
 
 
 class ParcelStatus(ParcelBase):
+    """:class:`Enum` that holds parcel statuses"""
     UNKNOWN = 'UNKNOWN DATA'
     CREATED = 'Utworzona'  # TODO: translate from app
     OFFERS_PREPARED = 'Oferty przygotowane'  # TODO: translate from app
@@ -128,6 +146,7 @@ class ParcelStatus(ParcelBase):
 
 
 class ParcelOwnership(ParcelBase):
+    """:class:`Enum` that holds parcel ownership types"""
     UNKNOWN = 'UNKNOWN DATA'
     FRIEND = 'Zaprzyjaźniona'
     OWN = 'Własna'
@@ -135,12 +154,14 @@ class ParcelOwnership(ParcelBase):
 
 # both are the same, only for being clear
 class CompartmentExpectedStatus(ParcelBase):
+    """:class:`Enum` that holds compartment expected statuses"""
     UNKNOWN = 'UNKNOWN DATA'
     OPENED = 'Otwarta'
     CLOSED = 'Zamknięta'
 
 
 class CompartmentActualStatus(ParcelBase):
+    """:class:`Enum` that holds compartment actual statuses"""
     UNKNOWN = 'UNKNOWN DATA'
     OPENED = 'Otwarta'
     CLOSED = 'Zamknięta'
