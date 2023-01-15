@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Welcome to inpost-python’s documentation! &#8212; inpost-python 0.0.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="usage.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="welcome-to-inpost-python-s-documentation">
+<h1>Welcome to inpost-python’s documentation!<a class="headerlink" href="#welcome-to-inpost-python-s-documentation" title="Permalink to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This project is under active development.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">inpost.api</span> <span class="kn">import</span> <span class="n">Inpost</span>
+
+<span class="n">inp</span> <span class="o">=</span> <span class="k">await</span> <span class="n">Inpost</span><span class="o">.</span><span class="n">from_phone_number</span><span class="p">(</span><span class="s1">&#39;555333444&#39;</span><span class="p">)</span>
+<span class="k">await</span> <span class="n">inp</span><span class="o">.</span><span class="n">send_sms_code</span><span class="p">():</span>
+<span class="o">...</span>
+<span class="k">if</span> <span class="k">await</span> <span class="n">inp</span><span class="o">.</span><span class="n">confirm_sms_code</span><span class="p">(</span><span class="mi">123321</span><span class="p">):</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Congratulations, you initialized successfully!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#installation">Installation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Inpost</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#inpost.api.Inpost"><code class="docutils literal notranslate"><span class="pre">Inpost</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.__init__"><code class="docutils literal notranslate"><span class="pre">Inpost.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.check_compartment_status"><code class="docutils literal notranslate"><span class="pre">Inpost.check_compartment_status()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.close_compartment"><code class="docutils literal notranslate"><span class="pre">Inpost.close_compartment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.collect"><code class="docutils literal notranslate"><span class="pre">Inpost.collect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.collect_compartment_properties"><code class="docutils literal notranslate"><span class="pre">Inpost.collect_compartment_properties()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.confirm_sms_code"><code class="docutils literal notranslate"><span class="pre">Inpost.confirm_sms_code()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.disconnect"><code class="docutils literal notranslate"><span class="pre">Inpost.disconnect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.from_phone_number"><code class="docutils literal notranslate"><span class="pre">Inpost.from_phone_number()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.get_parcel"><code class="docutils literal notranslate"><span class="pre">Inpost.get_parcel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.get_parcels"><code class="docutils literal notranslate"><span class="pre">Inpost.get_parcels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.get_prices"><code class="docutils literal notranslate"><span class="pre">Inpost.get_prices()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.logout"><code class="docutils literal notranslate"><span class="pre">Inpost.logout()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.open_compartment"><code class="docutils literal notranslate"><span class="pre">Inpost.open_compartment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.refresh_token"><code class="docutils literal notranslate"><span class="pre">Inpost.refresh_token()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.send_sms_code"><code class="docutils literal notranslate"><span class="pre">Inpost.send_sms_code()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.set_phone_number"><code class="docutils literal notranslate"><span class="pre">Inpost.set_phone_number()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#inpost.api.Inpost.terminate_collect_session"><code class="docutils literal notranslate"><span class="pre">Inpost.terminate_collect_session()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parcels.html">Parcels</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Parcel.html">Parcel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel"><code class="docutils literal notranslate"><span class="pre">Parcel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.__init__"><code class="docutils literal notranslate"><span class="pre">Parcel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.open_code"><code class="docutils literal notranslate"><span class="pre">Parcel.open_code()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.generate_qr_image"><code class="docutils literal notranslate"><span class="pre">Parcel.generate_qr_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.compartment_properties"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#id0"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.compartment_location"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_location()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.compartment_status"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.compartment_open_data"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_open_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="Parcel.html#inpost.static.parcels.Parcel.mocked_location"><code class="docutils literal notranslate"><span class="pre">Parcel.mocked_location()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Receiver.html">Receiver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Receiver.html#inpost.static.parcels.Receiver"><code class="docutils literal notranslate"><span class="pre">Receiver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Receiver.html#inpost.static.parcels.Receiver.__init__"><code class="docutils literal notranslate"><span class="pre">Receiver.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Sender.html">Sender</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Sender.html#inpost.static.parcels.Sender"><code class="docutils literal notranslate"><span class="pre">Sender</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Sender.html#inpost.static.parcels.Sender.__init__"><code class="docutils literal notranslate"><span class="pre">Sender.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PickupPoint.html">PickupPoint</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PickupPoint.html#inpost.static.parcels.PickupPoint"><code class="docutils literal notranslate"><span class="pre">PickupPoint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="PickupPoint.html#inpost.static.parcels.PickupPoint.__init__"><code class="docutils literal notranslate"><span class="pre">PickupPoint.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="PickupPoint.html#inpost.static.parcels.PickupPoint.location"><code class="docutils literal notranslate"><span class="pre">PickupPoint.location()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="MultiCompartment.html">MultiCompartment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="MultiCompartment.html#inpost.static.parcels.MultiCompartment"><code class="docutils literal notranslate"><span class="pre">MultiCompartment</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="MultiCompartment.html#inpost.static.parcels.MultiCompartment.__init__"><code class="docutils literal notranslate"><span class="pre">MultiCompartment.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Operations.html">Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Operations.html#inpost.static.parcels.Operations"><code class="docutils literal notranslate"><span class="pre">Operations</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="Operations.html#inpost.static.parcels.Operations.__init__"><code class="docutils literal notranslate"><span class="pre">Operations.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="EventLog.html">EventLog</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="EventLog.html#inpost.static.parcels.EventLog"><code class="docutils literal notranslate"><span class="pre">EventLog</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="EventLog.html#inpost.static.parcels.EventLog.__init__"><code class="docutils literal notranslate"><span class="pre">EventLog.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="SharedTo.html">SharedTo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="SharedTo.html#inpost.static.parcels.SharedTo"><code class="docutils literal notranslate"><span class="pre">SharedTo</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="SharedTo.html#inpost.static.parcels.SharedTo.__init__"><code class="docutils literal notranslate"><span class="pre">SharedTo.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="QRCode.html">QRCode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="QRCode.html#inpost.static.parcels.QRCode"><code class="docutils literal notranslate"><span class="pre">QRCode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="QRCode.html#inpost.static.parcels.QRCode.__init__"><code class="docutils literal notranslate"><span class="pre">QRCode.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="QRCode.html#inpost.static.parcels.QRCode.qr_image"><code class="docutils literal notranslate"><span class="pre">QRCode.qr_image()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CompartmentLocation.html">CompartmentLocation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CompartmentLocation.html#inpost.static.parcels.CompartmentLocation"><code class="docutils literal notranslate"><span class="pre">CompartmentLocation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CompartmentLocation.html#inpost.static.parcels.CompartmentLocation.__init__"><code class="docutils literal notranslate"><span class="pre">CompartmentLocation.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CompartmentProperties.html">CompartmentProperties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties"><code class="docutils literal notranslate"><span class="pre">CompartmentProperties</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties.__init__"><code class="docutils literal notranslate"><span class="pre">CompartmentProperties.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties.session_uuid"><code class="docutils literal notranslate"><span class="pre">CompartmentProperties.session_uuid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties.location"><code class="docutils literal notranslate"><span class="pre">CompartmentProperties.location()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties.status"><code class="docutils literal notranslate"><span class="pre">CompartmentProperties.status()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">inpost-python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Inpost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parcels.html">Parcels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="usage.html" title="next chapter">Usage</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Piotr Łoboda.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Parcel &#8212; inpost-python 0.0.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Receiver" href="Receiver.html" />
+    <link rel="prev" title="Parcels" href="parcels.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="parcel">
+<h1>Parcel<a class="headerlink" href="#parcel" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">inpost.static.parcels.</span></span><span class="sig-name descname"><span class="pre">Parcel</span></span><a class="reference internal" href="_modules/inpost/static/parcels.html#Parcel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#inpost.static.parcels.Parcel" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parcel_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/inpost/static/parcels.html#Parcel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#inpost.static.parcels.Parcel.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor method</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.open_code">
+<span class="sig-name descname"><span class="pre">open_code</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.open_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an open code for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Open code for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.generate_qr_image">
+<span class="sig-name descname"><span class="pre">generate_qr_image</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.generate_qr_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a QR image for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QR image for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>BytesIO</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.compartment_properties">
+<span class="sig-name descname"><span class="pre">compartment_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.compartment_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a compartment properties for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Compartment properties for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties" title="inpost.static.parcels.CompartmentProperties">CompartmentProperties</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">compartment_properties</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a compartment properties for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Compartment properties for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="CompartmentProperties.html#inpost.static.parcels.CompartmentProperties" title="inpost.static.parcels.CompartmentProperties">CompartmentProperties</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.compartment_location">
+<span class="sig-name descname"><span class="pre">compartment_location</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.compartment_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a compartment location for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Compartment location for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="CompartmentLocation.html#inpost.static.parcels.CompartmentLocation" title="inpost.static.parcels.CompartmentLocation">CompartmentLocation</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.compartment_status">
+<span class="sig-name descname"><span class="pre">compartment_status</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.compartment_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a compartment status for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Compartment status for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>CompartmentActualStatus</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.compartment_open_data">
+<span class="sig-name descname"><span class="pre">compartment_open_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.compartment_open_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a compartment open data for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict containing compartment open data for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="inpost.static.parcels.Parcel.mocked_location">
+<span class="sig-name descname"><span class="pre">mocked_location</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#inpost.static.parcels.Parcel.mocked_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a mocked location for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict containing mocked location for <a class="reference internal" href="#inpost.static.parcels.Parcel" title="inpost.static.parcels.Parcel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parcel</span></code></a></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">inpost-python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">Inpost</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="parcels.html">Parcels</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Parcel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inpost.static.parcels.Parcel"><code class="docutils literal notranslate"><span class="pre">Parcel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.__init__"><code class="docutils literal notranslate"><span class="pre">Parcel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.open_code"><code class="docutils literal notranslate"><span class="pre">Parcel.open_code()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.generate_qr_image"><code class="docutils literal notranslate"><span class="pre">Parcel.generate_qr_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.compartment_properties"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.compartment_location"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_location()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.compartment_status"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.compartment_open_data"><code class="docutils literal notranslate"><span class="pre">Parcel.compartment_open_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inpost.static.parcels.Parcel.mocked_location"><code class="docutils literal notranslate"><span class="pre">Parcel.mocked_location()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Receiver.html">Receiver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Sender.html">Sender</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PickupPoint.html">PickupPoint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="MultiCompartment.html">MultiCompartment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Operations.html">Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="EventLog.html">EventLog</a></li>
+<li class="toctree-l2"><a class="reference internal" href="SharedTo.html">SharedTo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="QRCode.html">QRCode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CompartmentLocation.html">CompartmentLocation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CompartmentProperties.html">CompartmentProperties</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="parcels.html">Parcels</a><ul>
+      <li>Previous: <a href="parcels.html" title="previous chapter">Parcels</a></li>
+      <li>Next: <a href="Receiver.html" title="next chapter">Receiver</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Piotr Łoboda.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/Parcel.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
