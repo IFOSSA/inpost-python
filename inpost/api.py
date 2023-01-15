@@ -24,8 +24,9 @@ class Inpost:
     @classmethod
     async def from_phone_number(cls, phone_number: str | int):
         """`Classmethod` to initialize :class:`Inpost` object with phone number
+
         :param phone_number: User's Inpost phone number
-        :type phone_number: str, int"""
+        :type phone_number: str | int"""
         if isinstance(phone_number, int):
             phone_number = str(phone_number)
         inp = cls()
@@ -35,8 +36,9 @@ class Inpost:
 
     async def set_phone_number(self, phone_number: str | int) -> bool:
         """Set :class:`Inpost` phone number required for verification
+
         :param phone_number: User's Inpost phone number
-        :type phone_number: str, int
+        :type phone_number: str | int
         :return: True if `Inpost.phone_number` is set
         :rtype: bool
         :raises PhoneNumberError: Wrong phone number format"""
@@ -54,6 +56,7 @@ class Inpost:
 
     async def send_sms_code(self) -> bool:
         """Sends sms code to `Inpost.phone_number`
+
         :return: True if sms code sent
         :rtype: bool
         :raises PhoneNumberError: Missing phone number
@@ -93,8 +96,9 @@ class Inpost:
 
     async def confirm_sms_code(self, sms_code: str | int) -> bool:
         """Confirms sms code sent to `Inpost.phone_number` and fetches tokens
-        :param sms_code: sms code sent to `Inpost.phone_number` device
-        :type sms_code: str, int
+
+        :param sms_code: sms code sent to Inpost.phone_number device
+        :type sms_code: str | int
         :return: True if sms code gets confirmed and tokens fetched
         :rtype: bool
         :raises SmsCodeError: Wrong sms code format
@@ -102,6 +106,7 @@ class Inpost:
         :raises NotFoundError: Phone number not found
         :raises UnidentifiedAPIError: Unexpected thing happened
         """
+
         if not self.phone_number:  # can't log it cuz if there's no phone number no logger initialized @shrug
             raise PhoneNumberError('Phone number missing')
 
@@ -151,7 +156,8 @@ class Inpost:
 
     async def refresh_token(self) -> bool:
         """Refreshes authorization token using refresh token
-        :return: True if `Inpost.auth_token` gets refreshed
+
+        :return: True if Inpost.auth_token gets refreshed
         :rtype: bool
         :raises RefreshTokenError: Missing refresh token
         :raises UnauthorizedError: Unauthorized access to inpost services,
@@ -206,6 +212,7 @@ class Inpost:
 
     async def logout(self) -> bool:
         """Logouts user from inpost api service
+
         :return: True if the user is logged out
         :rtype: bool
         :raises NotAuthenticatedError: User not authenticated in inpost service
@@ -252,6 +259,7 @@ class Inpost:
 
     async def disconnect(self) -> bool:
         """Simplified method to logout and close user's session
+
         :return: True if user is logged out and session is closed else False
         :raises NotAuthenticatedError: User not authenticated in inpost service"""
         self._log.info(f'disconnecting')
@@ -269,12 +277,13 @@ class Inpost:
 
     async def get_parcel(self, shipment_number: int | str, parse=False) -> dict | Parcel:
         """Fetches single parcel from provided shipment number
+
         :param shipment_number: Parcel's shipment number
-        :type shipment_number: int, str
+        :type shipment_number: int | str
         :param parse: if set to True method will return :class:`Parcel` else :class:`dict`
         :type parse: bool
-        :return: fetched parcel data
-        :rtype: dict, Parcel
+        :return: Fetched parcel data
+        :rtype: dict | Parcel
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
@@ -317,21 +326,22 @@ class Inpost:
                           shipment_type: ParcelShipmentType | List[ParcelShipmentType] | None = None,
                           parcel_size: ParcelLockerSize | ParcelCarrierSize | None = None,
                           parse: bool = False) -> List[dict] | List[Parcel]:
-        """Fetches all available parcels for set `Inpost.phone_number and optionally filters them`
+        """Fetches all available parcels for set `Inpost.phone_number` and optionally filters them
+
         :param parcel_type: Parcel type (e.g. received, sent, returned)
         :type parcel_type: ParcelType
         :param status: status that each fetched parcels has to be in
-        :type status: ParcelStatus, list[ParcelStatus], None
+        :type status: ParcelStatus | list[ParcelStatus] | None
         :param pickup_point: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)
-        :type pickup_point: str, list[str], None
+        :type pickup_point: str | list[str] | None
         :param shipment_type: Fetched parcels have to be shipped that way
-        :type shipment_type: ParcelShipmentType, list[ParcelShipmentType], None
+        :type shipment_type: ParcelShipmentType | list[ParcelShipmentType] | None
         :param parcel_size: Fetched parcels have to be this size
-        :type parcel_size: ParcelLockerSize, ParcelCarrierSize, None
+        :type parcel_size: ParcelLockerSize | ParcelCarrierSize | None
         :param parse: if set to True method will return list[:class:`Parcel`] else list[:class:`dict`]
         :type parse: bool
         :return: fetched parcels data
-        :rtype: list[dict], list[Parcel]
+        :rtype: list[dict] | list[Parcel]
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises ParcelTypeError: Unknown parcel type selected
         :raises UnauthorizedError: Unauthorized access to inpost services,
@@ -458,12 +468,13 @@ class Inpost:
     async def collect_compartment_properties(self, shipment_number: str | int | None = None,
                                              parcel_obj: Parcel | None = None, location: dict | None = None) -> bool:
         """Validates sent data and fetches required compartment properties for opening
+
         :param shipment_number: Parcel's shipment number
-        :type shipment_number: int, str, None
+        :type shipment_number: int | str | None
         :param parcel_obj: :class:`Parcel` object to obtain data from
-        :type parcel_obj: Parcel, None
+        :type parcel_obj: Parcel | None
         :param location: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)
-        :type location: dict, None
+        :type location: dict | None
         :return: fetched parcels data
         :rtype: bool
         :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required
@@ -521,8 +532,9 @@ class Inpost:
             #     self._log.error(f'could not collect compartment properties for {shipment_number}')
             #     raise UnidentifiedAPIError(reason=collect_resp)
 
-    async def open_compartment(self):
+    async def open_compartment(self) -> bool:
         """Opens compartment for `Inpost.parcel` object
+
         :return: True if compartment gets opened
         :rtype: bool
         :raises NotAuthenticatedError: User not authenticated in inpost service
@@ -566,8 +578,9 @@ class Inpost:
             #     raise UnidentifiedAPIError(reason=compartment_open_resp)
 
     async def check_compartment_status(self,
-                                       expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED):
+                                       expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED) -> bool:
         """Checks and compare compartment status (e.g. opened, closed) with expected status
+
         :param expected_status: Compartment expected status
         :type expected_status: CompartmentExpectedStatus
         :return: True if actual status equals expected status else False
@@ -617,8 +630,9 @@ class Inpost:
             #     self._log.error(f'could not check compartment status for {self.parcel.shipment_number}')
             #     raise UnidentifiedAPIError(reason=compartment_status_resp)
 
-    async def terminate_collect_session(self):
+    async def terminate_collect_session(self) -> bool:
         """Terminates user session in inpost api service
+
         :return: True if the user session is terminated
         :rtype: bool
         :raises NotAuthenticatedError: User not authenticated in inpost service
@@ -663,12 +677,13 @@ class Inpost:
     async def collect(self, shipment_number: str | None = None, parcel_obj: Parcel | None = None,
                       location: dict | None = None) -> bool:
         """Simplified method to open compartment
+
         :param shipment_number: Parcel's shipment number
-        :type shipment_number: int, str, None
+        :type shipment_number: int | str | None
         :param parcel_obj: :class:`Parcel` object to obtain data from
-        :type parcel_obj: Parcel, None
+        :type parcel_obj: Parcel | None
         :param location: Fetched parcels have to be picked from this pickup point (e.g. `GXO05M`)
-        :type location: dict, None
+        :type location: dict | None
         :return: fetched parcels data
         :rtype: bool
         :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required
@@ -701,6 +716,7 @@ class Inpost:
 
     async def close_compartment(self) -> bool:
         """Checks whether actual compartment status and expected one matches then notifies inpost api that compartment is closed
+
         :return: True if compartment status is closed and successfully terminates user's session else False
         :rtype: bool"""
         self._log.info(f'closing compartment for {self.parcel.shipment_number}')
@@ -713,6 +729,7 @@ class Inpost:
 
     async def get_prices(self) -> dict:
         """Fetches prices for inpost services
+
         :return: :class:`dict` of prices for inpost services
         :rtype: dict
         :raises NotAuthenticatedError: User not authenticated in inpost service

@@ -11,7 +11,8 @@ from inpost.static.statuses import *
 
 class Parcel:
     """Object representation of :class:`inpost.api.Inpost` compartment properties
-    :param parcel_data: :class:`dict` containing all `parcel data`
+
+    :param parcel_data: :class:`dict` containing all parcel data
     :type parcel_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -69,6 +70,7 @@ class Parcel:
     @property
     def open_code(self) -> str | None:
         """Returns an open code for :class:`Parcel`
+
         :return: Open code for :class:`Parcel`
         :rtype: str"""
         self._log.debug('getting open code')
@@ -82,6 +84,7 @@ class Parcel:
     @property
     def generate_qr_image(self) -> BytesIO | None:
         """Returns a QR image for :class:`Parcel`
+
         :return: QR image for :class:`Parcel`
         :rtype: BytesIO"""
         self._log.debug('generating qr image')
@@ -95,6 +98,7 @@ class Parcel:
     @property
     def compartment_properties(self):
         """Returns a compartment properties for :class:`Parcel`
+
         :return: Compartment properties for :class:`Parcel`
         :rtype: CompartmentProperties"""
         self._log.debug('getting comparment properties')
@@ -108,7 +112,8 @@ class Parcel:
     @compartment_properties.setter
     def compartment_properties(self, compartmentproperties_data: dict):
         """Set compartment properties for :class:`Parcel`
-        :param compartmentproperties_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`
+
+        :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`Parcel`
         :type compartmentproperties_data: CompartmentProperties"""
         self._log.debug(f'setting compartment properties with {compartmentproperties_data}')
         if self.shipment_type == ParcelShipmentType.parcel:
@@ -121,6 +126,7 @@ class Parcel:
     @property
     def compartment_location(self):
         """Returns a compartment location for :class:`Parcel`
+
         :return: Compartment location for :class:`Parcel`
         :rtype: CompartmentLocation"""
         self._log.debug('getting compartment location')
@@ -146,6 +152,7 @@ class Parcel:
     @property
     def compartment_status(self) -> CompartmentActualStatus | None:
         """Returns a compartment status for :class:`Parcel`
+
         :return: Compartment status for :class:`Parcel`
         :rtype: CompartmentActualStatus"""
         self._log.debug('getting compartment status')
@@ -168,6 +175,7 @@ class Parcel:
     @property
     def compartment_open_data(self):
         """Returns a compartment open data for :class:`Parcel`
+
         :return: dict containing compartment open data for :class:`Parcel`
         :rtype: dict"""
         self._log.debug('getting compartment open data')
@@ -185,6 +193,7 @@ class Parcel:
     @property
     def mocked_location(self):
         """Returns a mocked location for :class:`Parcel`
+
         :return: dict containing mocked location for :class:`Parcel`
         :rtype: dict"""
         self._log.debug('getting mocked location')
@@ -202,7 +211,8 @@ class Parcel:
 
 class Receiver:
     """Object representation of :class:`Parcel` receiver
-    :param receiver_data: :class:`dict` containing `sender` data for :class:`Parcel`
+
+    :param receiver_data: :class:`dict` containing sender data for :class:`Parcel`
     :type receiver_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -218,7 +228,8 @@ class Receiver:
 
 class Sender:
     """Object representation of :class:`Parcel` sender
-    :param sender_data: :class:`dict` containing `sender` data for :class:`Parcel`
+
+    :param sender_data: :class:`dict` containing sender data for :class:`Parcel`
     :type sender_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -236,7 +247,8 @@ class Sender:
 
 class PickupPoint:
     """Object representation of :class:`Parcel` pickup point
-    :param pickuppoint_data: :class:`dict` containing `pickup point` data for :class:`Parcel`
+
+    :param pickuppoint_data: :class:`dict` containing pickup point data for :class:`Parcel`
     :type pickuppoint_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -274,6 +286,7 @@ class PickupPoint:
     @property
     def location(self) -> Tuple[float, float]:
         """Returns a mocked location for :class:`PickupPoint`
+
         :return: tuple containing location for :class:`PickupPoint`
         :rtype: tuple"""
         self._log.debug('getting location')
@@ -282,7 +295,8 @@ class PickupPoint:
 
 class MultiCompartment:
     """Object representation of :class:`Parcel` `multicompartment`
-    :param multicompartment_data: :class:`dict` containing `multicompartment` data for :class:`Parcel`
+
+    :param multicompartment_data: :class:`dict` containing multicompartment data for :class:`Parcel`
     :type multicompartment_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -301,7 +315,8 @@ class MultiCompartment:
 
 class Operations:
     """Object representation of :class:`Parcel` `operations`
-    :param operations_data: :class:`dict` containing `operations` data for :class:`Parcel`
+
+    :param operations_data: :class:`dict` containing operations data for :class:`Parcel`
     :type operations_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -328,7 +343,8 @@ class Operations:
 
 class EventLog:
     """Object representation of :class:`Parcel` single eventlog
-    :param eventlog_data: :class:`dict` containing single `eventlog` data for :class:`Parcel`
+
+    :param eventlog_data: :class:`dict` containing single eventlog data for :class:`Parcel`
     :type eventlog_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -348,7 +364,8 @@ class EventLog:
 
 class SharedTo:
     """Object representation of :class:`Parcel` single shared to
-    :param sharedto_data: :class:`dict` containing `shared to` data for :class:`Parcel`
+
+    :param sharedto_data: :class:`dict` containing shared to data for :class:`Parcel`
     :type sharedto_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -365,7 +382,8 @@ class SharedTo:
 
 class QRCode:
     """Object representation of :class:`Parcel` QRCode
-    :param qrcode_data: :class:`str` containing `qrcode` data for :class:`Parcel`
+
+    :param qrcode_data: :class:`str` containing qrcode data for :class:`Parcel`
     :type qrcode_data: str
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -380,7 +398,8 @@ class QRCode:
     @property
     def qr_image(self) -> BytesIO:
         """Returns a generated QR image for :class:`QRCode`
-        :return: tuple containing location for :class:`QRCode`
+
+        :return: QR Code image
         :rtype: BytesIO"""
         self._log.debug('generating qr image')
         qr = qrcode.QRCode(
@@ -404,7 +423,8 @@ class QRCode:
 
 class CompartmentLocation:
     """Object representation of :class:`CompartmentProperties` compartment location
-    :param compartmentlocation_data: :class:`dict` containing `compartment location` data for :class:`Parcel`
+
+    :param compartmentlocation_data: :class:`dict` containing compartment location data for :class:`Parcel`
     :type compartmentlocation_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -425,7 +445,8 @@ class CompartmentLocation:
 
 class CompartmentProperties:
     """Object representation of :class:`Parcel` compartment properties
-    :param compartmentproperties_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`
+
+    :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`Parcel`
     :type compartmentproperties_data: dict
     :param logger: :class:`logging.Logger` parent instance
     :type logger: logging.Logger"""
@@ -443,6 +464,7 @@ class CompartmentProperties:
     @property
     def session_uuid(self):
         """Returns a session unique identified for :class:`CompartmentProperties`
+
         :return: string containing session unique identified for :class:`CompartmentProperties`
         :rtype: str"""
         self._log.debug('getting session uuid')
@@ -451,6 +473,7 @@ class CompartmentProperties:
     @property
     def location(self):
         """Returns a compartment location for :class:`CompartmentProperties`
+
         :return: compartment location for :class:`CompartmentProperties`
         :rtype: str"""
         self._log.debug('getting location')
@@ -459,6 +482,7 @@ class CompartmentProperties:
     @location.setter
     def location(self, location_data: dict):
         """Set a compartment location for :class:`CompartmentProperties`
+
         :param location_data: dict containing compartment location data for :class:`CompartmentProperties`
         :type location_data: dict"""
         self._log.debug('setting location')
@@ -467,6 +491,7 @@ class CompartmentProperties:
     @property
     def status(self):
         """Returns a compartment status for :class:`CompartmentProperties`
+
         :return: compartment location for :class:`CompartmentProperties`
         :rtype: CompartmentActualStatus"""
         self._log.debug('getting status')

@@ -6,7 +6,8 @@ from .parcels import Parcel
 # ------------------ Base ------------------- #
 class BaseInpostError(Exception):
     """Base exception to inherit from
-    :param reason: reason of :exc:`BaseInpostError` happening
+
+    :param reason: reason of BaseInpostError happening
     :type reason: typing.Any"""
 
     def __init__(self, reason):
@@ -16,7 +17,7 @@ class BaseInpostError(Exception):
 
     @property
     def stacktrace(self):
-        """Gets stacktrace of raised exception """
+        """Gets stacktrace of raised exception"""
         return self.reason
 
 
