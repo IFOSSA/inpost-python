@@ -15,6 +15,10 @@ class Meta(EnumMeta):  # temporary handler for unexpected keys in enums
         except KeyError as error:
             return cls.UNKNOWN
 
+    def __repr__(self):
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
+
     def get_all(cls):
         return [getattr(cls, name) for name in cls.__members__]
 
