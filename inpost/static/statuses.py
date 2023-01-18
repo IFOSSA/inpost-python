@@ -1,4 +1,5 @@
 from enum import Enum, EnumMeta
+from typing import List
 
 
 class Meta(EnumMeta):  # temporary handler for unexpected keys in enums
@@ -8,15 +9,29 @@ class Meta(EnumMeta):  # temporary handler for unexpected keys in enums
         except KeyError as error:
             return cls.UNKNOWN
 
-    def __getattr__(cls, item):
+    def __getattribute__(cls, item):
         try:
             return super().__getattribute__(item)
         except KeyError as error:
             return cls.UNKNOWN
 
+    def __repr__(self):
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
+
+    def get_all(cls):
+        return [getattr(cls, name) for name in cls.__members__]
+
+    def get_without(cls, without: 'ParcelBase' | List['ParcelBase']):
+        if isinstance(without, ParcelBase):
+            without = [without]
+
+        return [element for element in cls.get_all() if element not in without]
+
 
 class ParcelBase(Enum, metaclass=Meta):
     """Base :class:`Enum` class to derive from"""
+
     def __gt__(self, other):
         if isinstance(other, ParcelBase):
             ...
@@ -118,7 +133,7 @@ class ParcelStatus(ParcelBase):
     READY_TO_PICKUP = 'Gotowa do odbioru'
     PICKUP_REMINDER_SENT = 'Wysłano przypomnienie o odbiorze'  # TODO: translate from app
     PICKUP_TIME_EXPIRED = 'Upłynął czas odbioru'  # TODO: translate from app
-    AVIZO = 'Awizo'  # TODO: translate from app
+    AVIZO = 'Powrót do oddziału'
     TAKEN_BY_COURIER_FROM_POK = 'Odebrana z PaczkoPunktu nadawczego'
     REJECTED_BY_RECEIVER = 'Odrzucona przez odbiorcę'  # TODO: translate from app
     UNDELIVERED = 'Nie dostarczona'  # TODO: translate from app
@@ -127,7 +142,7 @@ class ParcelStatus(ParcelBase):
     READY_TO_PICKUP_FROM_BRANCH = 'Gotowa do odbioru z oddziału'  # TODO: translate from app
     DELIVERED = 'Doręczona'
     CANCELED = 'Anulowana'  # TODO: translate from app
-    CLAIMED = 'Przejęta'  # TODO: translate from app
+    CLAIMED = 'Zareklamowana'
     STACK_IN_CUSTOMER_SERVICE_POINT = 'Umieszczona w punkcie obsługi klienta'  # TODO: translate from app
     STACK_PARCEL_PICKUP_TIME_EXPIRED = 'Upłynął czas odbioru'  # TODO: translate from app
     UNSTACK_FROM_CUSTOMER_SERVICE_POINT = '?'  # TODO: translate from app
