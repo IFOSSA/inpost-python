@@ -498,6 +498,7 @@ class Inpost:
             match compartment_status_resp.status:
                 case 200:
                     self._log.debug(f'checked compartment status for {self.parcel.shipment_number}')
+                    self.parcel.compartment_status = (await compartment_status_resp.json())['status']
                     return CompartmentExpectedStatus[
                         (await compartment_status_resp.json())['status']] == expected_status
                 case 401:
@@ -570,8 +571,6 @@ class Inpost:
 
         .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!"""
 
-        self._log.info(f'collecing parcel with shipment number {self.parcel.shipment_number}')
-
         if shipment_number and parcel_obj:
             self._log.error(f'shipment_number and parcel_obj filled in')
             raise SingleParamError(reason='Fields shipment_number and parcel_obj filled! Choose one!')
@@ -582,6 +581,8 @@ class Inpost:
 
         if shipment_number is not None and parcel_obj is None:
             parcel_obj = await self.get_parcel(shipment_number=shipment_number, parse=True)
+
+        self._log.info(f'collecing parcel with shipment number {parcel_obj.shipment_number}')
 
         if await self.collect_compartment_properties(parcel_obj=parcel_obj, location=location):
             if await self.open_compartment():
