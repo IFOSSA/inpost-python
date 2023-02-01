@@ -7,6 +7,7 @@ confirm_sms_code: str = 'https://api-inmobile-pl.easypack24.net/v1/confirmSMSCod
 refresh_token: str = 'https://api-inmobile-pl.easypack24.net/v1/authenticate'  # post
 parcels: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/tracked'  # get
 parcel: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/tracked/'  # get
+multi: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/multi/'  # get
 collect: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/validate'  # post
 compartment_open: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/compartment/open'  # post
 compartment_status: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/compartment/status'  # post

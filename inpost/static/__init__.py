@@ -9,4 +9,4 @@ from .exceptions import NoParcelError, UnidentifiedParcelError, ParcelTypeError,
     UnidentifiedError, NotFoundError, UnauthorizedError, SingleParamError
 from .endpoints import login, send_sms_code, confirm_sms_code, refresh_token, parcels, parcel, collect, \
     compartment_open, compartment_status, terminate_collect_session, friends, shared, sent, returns, parcel_prices, \
-    tickets, logout
+    tickets, logout, multi
