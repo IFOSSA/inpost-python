@@ -21,6 +21,12 @@ class Inpost:
     def __repr__(self):
         return f'{self.__class__.__name__}(phone_number={self.phone_number})'
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return self.logout()
+
     @classmethod
     async def from_phone_number(cls, phone_number: str | int):
         """`Classmethod` to initialize :class:`Inpost` object with phone number
@@ -340,7 +346,8 @@ class Inpost:
                         if isinstance(pickup_point, str):
                             pickup_point = [pickup_point]
 
-                        _parcels = (_parcel for _parcel in _parcels if _parcel['pickUpPoint']['name'] in pickup_point)
+                        _parcels = (_parcel for _parcel in _parcels if
+                                    _parcel['pickUpPoint']['name'] in pickup_point)
 
                     if shipment_type is not None:
                         if isinstance(shipment_type, ParcelShipmentType):
@@ -362,7 +369,8 @@ class Inpost:
                             _parcels = (_parcel for _parcel in _parcels if
                                         ParcelLockerSize[_parcel['parcelSize']] in parcel_size)
 
-                    return _parcels if not parse else [Parcel(parcel_data=data, logger=self._log) for data in _parcels]
+                    return _parcels if not parse else [Parcel(parcel_data=data, logger=self._log) for data in
+                                                       _parcels]
                 case 401:
                     self._log.error(f'could not get parcels, unauthorized')
                     raise UnauthorizedError(reason=resp)
@@ -371,6 +379,29 @@ class Inpost:
                     raise NotFoundError(reason=resp)
                 case _:
                     self._log.error(f'could not get parcels, unhandled status')
+
+            raise UnidentifiedAPIError(reason=resp)
+
+    async def get_multi_compartment(self, multi_uuid: str | int, parse: bool = False) -> dict | List[Parcel]:
+        if not self.auth_token:
+            self._log.error(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
+        async with await self.sess.get(url=f"{multi}{multi_uuid}",
+                                       headers={'Authorization': self.auth_token},
+                                       ) as resp:
+            match resp.status:
+                case 200:
+                    self._log.debug(f'parcel with multicompartment uuid {multi_uuid} received')
+                    return await resp.json() if not parse else [Parcel(data, logger=self._log) for data in (await resp.json())['parcels']]
+                case 401:
+                    self._log.error(f'could not get parcel with multicompartment uuid {multi_uuid}, unauthorized')
+                    raise UnauthorizedError(reason=resp)
+                case 404:
+                    self._log.error(f'could not get parcel with multicompartment uuid {multi_uuid}, not found')
+                    raise NotFoundError(reason=resp)
+                case _:
+                    self._log.error(f'could not get parcel with multicompartment uuid {multi_uuid}, unhandled status')
 
             raise UnidentifiedAPIError(reason=resp)
 
@@ -394,8 +425,6 @@ class Inpost:
 
         .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!"""
 
-        self._log.info(f'collecting compartment properties for {shipment_number}')
-
         if shipment_number and parcel_obj:
             self._log.error(f'shipment_number and parcel_obj filled in')
             raise SingleParamError(reason='Fields shipment_number and parcel_obj filled in! Choose one!')
@@ -408,6 +437,8 @@ class Inpost:
             self._log.debug(f'parcel_obj not provided, getting from shipment number {shipment_number}')
             parcel_obj = await self.get_parcel(shipment_number=shipment_number, parse=True)
 
+        self._log.info(f'collecting compartment properties for {parcel_obj.shipment_number}')
+
         async with await self.sess.post(url=collect,
                                         headers={'Authorization': self.auth_token},
                                         json={
@@ -416,18 +447,21 @@ class Inpost:
                                         }) as collect_resp:
             match collect_resp.status:
                 case 200:
-                    self._log.debug(f'collected compartment properties for {shipment_number}')
+                    self._log.debug(f'collected compartment properties for {parcel_obj.shipment_number}')
                     parcel_obj.compartment_properties = await collect_resp.json()
                     self.parcel = parcel_obj
                     return True
                 case 401:
-                    self._log.error(f'could not collect compartment properties for {shipment_number}, unauthorized')
+                    self._log.error(f'could not collect compartment properties for {parcel_obj.shipment_number}, '
+                                    f'unauthorized')
                     raise UnauthorizedError(reason=collect_resp)
                 case 404:
-                    self._log.error(f'could not collect compartment properties for {shipment_number}, not found')
+                    self._log.error(f'could not collect compartment properties for {parcel_obj.shipment_number}, not '
+                                    f'found')
                     raise NotFoundError(reason=collect_resp)
                 case _:
-                    self._log.error(f'could not collect compartment properties for {shipment_number}, unhandled status')
+                    self._log.error(f'could not collect compartment properties for {parcel_obj.shipment_number}, '
+                                    f'unhandled status')
 
             raise UnidentifiedAPIError(reason=collect_resp)
 
