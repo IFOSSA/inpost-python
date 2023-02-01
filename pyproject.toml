@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "inpost"
-version = "0.0.5"
+version = "0.0.6"
 description = "Asynchronous InPost package allowing you to manage existing incoming parcels without mobile app"
 authors = ["loboda4450 <loboda4450@gmail.com>", "MrKazik99 <mrkazik99@gmail.com>"]
 maintainers = ["loboda4450 <loboda4450@gmail.com>"]
