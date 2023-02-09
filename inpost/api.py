@@ -671,9 +671,11 @@ class Inpost:
 
             raise UnidentifiedAPIError(reason=resp)
 
-    async def get_friends(self) -> dict:
+    async def get_friends(self, parse=False) -> dict | List[Friend]:
         """Fetches user friends for inpost services
 
+        :param parse: switch for parsing response
+        :type parse: bool
         :return: :class:`dict` of user friends for inpost services
         :rtype: dict
         :raises NotAuthenticatedError: User not authenticated in inpost service
@@ -687,7 +689,8 @@ class Inpost:
             match resp.status:
                 case 200:
                     self._log.debug(f'got user friends')
-                    return await resp.json()
+                    r = await resp.json()
+                    return r if not parse else [Friend(friend_data=friend, logger=self._log) for friend in r['friends']]
                 case 401:
                     self._log.error('could not get user friends, unauthorized')
                     raise UnauthorizedError(reason=resp)
@@ -699,13 +702,17 @@ class Inpost:
 
             raise UnidentifiedAPIError(reason=resp)
 
-    async def add_friend(self, name: str, phone_number: str | int) -> dict:
+    async def add_friend(self, name: str, phone_number: str | int, code: str | int, parse=False) -> dict | Friend:
         """Adds user friends for inpost services
 
         :param name: name of further inpost friend
         :type name: str
         :param phone_number: further friend phone number
         :type phone_number: str | int
+        :param code: used when you have a friendship code from your friend
+        :type code: str | int
+        :param parse: switch for parsing response
+        :type parse: bool
         :return: :class:`dict` with friends details
         :rtype: dict
         :raises NotAuthenticatedError: User not authenticated in inpost service
@@ -715,33 +722,78 @@ class Inpost:
         :raises ValueError: Name length exceeds 20 characters"""
 
         self._log.info(f'adding user friend')
-
         if len(name) > 20:
             raise ValueError(f'Name too long: {name} (over 20 characters')
 
-        if isinstance(phone_number, int):
-            phone_number = str(phone_number)
+        if code:
+            if isinstance(code, int):
+                code = str(code)
 
-        async with await self.sess.post(url=friends,
-                                        headers={'Authorization': self.auth_token},
-                                        json={'phoneNumber': phone_number,
-                                              'name': name}) as resp:
-            match resp.status:
-                case 200:
-                    self._log.debug(f'added user friends')
-                    friend = await resp.json()
-                    return {'invitation_code': friend['invitationCode'],
-                            'expiry_date': friend['expiryDate']}
-                case 401:
-                    self._log.error('could not add user friends, unauthorized')
-                    raise UnauthorizedError(reason=resp)
-                case 404:
-                    self._log.error('could not add user friends, not found')
-                    raise NotFoundError(reason=resp)
-                case _:
-                    self._log.error('could not add user friends, unhandled status')
+            async with await self.sess.post(url=validate_friendship,
+                                            headers={'Authorization': self.auth_token},
+                                            json={'invitationCode': code}) as resp:
+                match resp.status:
+                    case 200:
+                        self._log.debug(f'validated friendship code')
+                        async with await self.sess.post(url=accept_friendship,
+                                                        headers={'Authorization': self.auth_token},
+                                                        json={'invitationCode': code,
+                                                              'friendName': name}):
+                            match resp.status:
+                                case 200:
+                                    self._log.debug(f'added user friend')
+                                    return await resp.json() if not parse else Friend(await resp.json(), logger=self._log)
 
-            raise UnidentifiedAPIError(reason=resp)
+                                case 401:
+                                    self._log.error('could not add user friends, unauthorized')
+                                    raise UnauthorizedError(reason=resp)
+                                case 404:
+                                    self._log.error('could not add user friends, not found')
+                                    raise NotFoundError(reason=resp)
+                                case _:
+                                    self._log.error('could not add user friends, unhandled status')
+                    case 401:
+                        self._log.error('could not validate friendship code, unauthorized')
+                        raise UnauthorizedError(reason=resp)
+                    case 404:
+                        self._log.error('could not validate friendship code, not found')
+                        raise NotFoundError(reason=resp)
+                    case _:
+                        self._log.error('could not validate friendship code, unhandled status')
+
+                raise UnidentifiedAPIError(reason=resp)
+
+        else:
+            if isinstance(phone_number, int):
+                phone_number = str(phone_number)
+
+            async with await self.sess.post(url=friends,
+                                            headers={'Authorization': self.auth_token},
+                                            json={'phoneNumber': phone_number,
+                                                  'name': name}) as resp:
+                match resp.status:
+                    case 200:
+                        self._log.debug(f'added user friend')
+                        r = await resp.json()
+                        if r['status'] == "AUTO_ACCEPT":
+                            return {'phoneNumber': phone_number, 'name': name} if not parse \
+                                else Friend({'phoneNumber': phone_number, 'name': name}, logger=self._log)
+
+                        elif r['status'] == "RETURN_INVITATION_CODE":
+                            return r if not parse else Friend.from_invitation(invitation_data=r, logger=self._log)
+
+                        else:
+                            ...
+                    case 401:
+                        self._log.error('could not add user friends, unauthorized')
+                        raise UnauthorizedError(reason=resp)
+                    case 404:
+                        self._log.error('could not add user friends, not found')
+                        raise NotFoundError(reason=resp)
+                    case _:
+                        self._log.error('could not add user friends, unhandled status')
+
+                raise UnidentifiedAPIError(reason=resp)
 
     async def remove_friend(self, uuid: str | None, name: str | None, phone_number: str | int | None) -> bool:
         """Removes user friend for inpost services with specified `uuid`/`phone_number`/`name`
@@ -818,7 +870,8 @@ class Inpost:
             phone_number = str(phone_number)
 
         if uuid is None:
-            uuid = next((friend['uuid'] for friend in await self.get_friends() if friend['phoneNumber'] == phone_number))
+            uuid = next(
+                (friend['uuid'] for friend in await self.get_friends() if friend['phoneNumber'] == phone_number))
 
         async with await self.sess.patch(url=f'{friends}{uuid}',
                                          headers={'Authorization': self.auth_token},
