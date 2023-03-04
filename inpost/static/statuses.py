@@ -143,12 +143,12 @@ class ParcelStatus(ParcelBase):
     DELIVERED = 'Doręczona'
     CANCELED = 'Anulowana'  # TODO: translate from app
     CLAIMED = 'Zareklamowana'
-    STACK_IN_CUSTOMER_SERVICE_POINT = 'Umieszczona w punkcie obsługi klienta'  # TODO: translate from app
+    STACK_IN_CUSTOMER_SERVICE_POINT = 'Przesyłka magazynowana w punkcie obsługi klienta'  # TODO: translate from app
     STACK_PARCEL_PICKUP_TIME_EXPIRED = 'Upłynął czas odbioru'  # TODO: translate from app
     UNSTACK_FROM_CUSTOMER_SERVICE_POINT = '?'  # TODO: translate from app
     COURIER_AVIZO_IN_CUSTOMER_SERVICE_POINT = 'Przekazana do punktu obsługi klienta'  # TODO: translate from app
     TAKEN_BY_COURIER_FROM_CUSTOMER_SERVICE_POINT = 'Odebrana przez kuriera z punktu obsługi klienta'  # TODO: translate from app
-    STACK_IN_BOX_MACHINE = 'Paczka w paczkomacie'  # TODO: translate from app
+    STACK_IN_BOX_MACHINE = 'Przesyłka magazynowana w paczkomacie tymczasowym'
     STACK_PARCEL_IN_BOX_MACHINE_PICKUP_TIME_EXPIRED = 'Upłynął czas odbioru z paczkomatu'  # TODO: translate from app
     UNSTACK_FROM_BOX_MACHINE = 'Odebrana z paczkomatu'  # TODO: translate from app
     ADOPTED_AT_SORTING_CENTER = 'Przyjęta w sortowni'
