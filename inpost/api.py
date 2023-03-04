@@ -682,15 +682,51 @@ class Inpost:
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
         :raises UnidentifiedAPIError: Unexpected thing happened"""
-        self._log.info(f'getting parcel prices')
+        self._log.info(f'getting friends')
 
-        async with await self.sess.get(url=friends,
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
+        async with await self.sess.get(url=friendship,
                                        headers={'Authorization': self.auth_token}) as resp:
             match resp.status:
                 case 200:
                     self._log.debug(f'got user friends')
                     r = await resp.json()
                     return r if not parse else [Friend(friend_data=friend, logger=self._log) for friend in r['friends']]
+                case 401:
+                    self._log.error('could not get user friends, unauthorized')
+                    raise UnauthorizedError(reason=resp)
+                case 404:
+                    self._log.error('could not get user friends, not found')
+                    raise NotFoundError(reason=resp)
+                case _:
+                    self._log.error('could not get user friends, unhandled status')
+
+            raise UnidentifiedAPIError(reason=resp)
+
+    async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:
+        self._log.info(f'getting parcel friends')
+
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
+        async with await self.sess.get(url=f"{friendship}{shipment_number}",
+                                       headers={'Authorization': self.auth_token}) as resp:
+            match resp.status:
+                case 200:
+                    self._log.debug(f'got user friends')
+                    r = await resp.json()
+                    if 'sharedWith' in r:
+                        return r if not parse else {
+                            'friends': [Friend(friend_data=friend, logger=self._log) for friend in r['friends']],
+                            'shared_with': [Friend(friend_data=friend, logger=self._log) for friend in r['sharedWith']]}
+                    return r if not parse else {
+                        'friends': [Friend(friend_data=friend, logger=self._log) for friend in r['friends']]
+                    }
+
                 case 401:
                     self._log.error('could not get user friends, unauthorized')
                     raise UnauthorizedError(reason=resp)
@@ -722,6 +758,11 @@ class Inpost:
         :raises ValueError: Name length exceeds 20 characters"""
 
         self._log.info(f'adding user friend')
+
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
         if len(name) > 20:
             raise ValueError(f'Name too long: {name} (over 20 characters')
 
@@ -742,7 +783,8 @@ class Inpost:
                             match resp.status:
                                 case 200:
                                     self._log.debug(f'added user friend')
-                                    return await resp.json() if not parse else Friend(await resp.json(), logger=self._log)
+                                    return await resp.json() if not parse else Friend(await resp.json(),
+                                                                                      logger=self._log)
 
                                 case 401:
                                     self._log.error('could not add user friends, unauthorized')
@@ -767,7 +809,7 @@ class Inpost:
             if isinstance(phone_number, int):
                 phone_number = str(phone_number)
 
-            async with await self.sess.post(url=friends,
+            async with await self.sess.post(url=friendship,
                                             headers={'Authorization': self.auth_token},
                                             json={'phoneNumber': phone_number,
                                                   'name': name}) as resp:
@@ -814,6 +856,10 @@ class Inpost:
 
         self._log.info(f'adding user friend')
 
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
         if uuid is None and name is None and phone_number is None:
             raise MissingParamsError(reason='None of params are filled (one required)')
 
@@ -823,11 +869,11 @@ class Inpost:
         if uuid is None:
             f = await self.get_friends()
             if phone_number:
-                uuid = next((friend['uuid'] for friend in f if friend['phoneNumber'] == phone_number))
+                uuid = next((friend['uuid'] for friend in f['friends'] if friend['phoneNumber'] == phone_number))
             else:
-                uuid = next((friend['uuid'] for friend in f if friend['name'] == name))
+                uuid = next((friend['uuid'] for friend in f['friends'] if friend['name'] == name))
 
-        async with await self.sess.delete(url=f'{friends}{uuid}',
+        async with await self.sess.delete(url=f'{friendship}{uuid}',
                                           headers={'Authorization': self.auth_token}) as resp:
             match resp.status:
                 case 200:
@@ -863,6 +909,10 @@ class Inpost:
 
         self._log.info(f'updating user friend')
 
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
         if len(name) > 20:
             raise ValueError(f'Name too long: {name} (over 20 characters')
 
@@ -871,7 +921,7 @@ class Inpost:
 
         if uuid is None:
             uuid = next(
-                (friend['uuid'] for friend in await self.get_friends() if friend['phoneNumber'] == phone_number))
+                (friend['uuid'] for friend in (await self.get_friends())['friends'] if friend['phoneNumber'] == phone_number))
 
         async with await self.sess.patch(url=f'{friends}{uuid}',
                                          headers={'Authorization': self.auth_token},
@@ -890,3 +940,49 @@ class Inpost:
                     self._log.error('could not update user friend, unhandled status')
 
             raise UnidentifiedAPIError(reason=resp)
+
+    async def share_parcel(self, uuid: str, shipment_number: int | str):
+        """Shares parcel to a pre-initialized friend
+
+        :param uuid: uuid of inpost friend to update
+        :type uuid: str
+        :param shipment_number: Parcel's shipment number
+        :type shipment_number: int | str
+        :return: True if parcel is shared
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Parcel or friend not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
+
+        self._log.info(f'sharing parcel: {shipment_number}')
+
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
+        async with await self.sess.post(url=shared,
+                                        json={
+                                            'parcels': [
+                                                {
+                                                    'shipmentNumber': shipment_number,
+                                                    'friendUuids': [
+                                                        uuid
+                                                    ]
+                                                }
+                                            ],
+                                        }) as share:
+            match share.status:
+                case 200:
+                    self._log.debug(f'shared parcel: {shipment_number}')
+                    return True
+                case 401:
+                    self._log.error(f'could not share parcel: {shipment_number}, unauthorized')
+                    raise UnauthorizedError(reason=share)
+                case 404:
+                    self._log.error(f'could not share parcel: {shipment_number}, not found')
+                    raise NotFoundError(reason=share)
+                case _:
+                    self._log.error(f'could not share parcel: {shipment_number}, unhandled status')
+
+            raise UnidentifiedAPIError(reason=share)
