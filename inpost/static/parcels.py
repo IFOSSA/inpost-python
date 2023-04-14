@@ -9,7 +9,20 @@ from arrow import get, arrow
 from inpost.static.statuses import *
 
 
-class Parcel:
+class BaseParcel:
+    def __init__(self, parcel_data: dict, logger: logging.Logger):
+        self.shipment_number: str = parcel_data['shipmentNumber']
+        self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
+        self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
+        # self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
+        #     if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
+        self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
+        self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
+        self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
+                                          for event in parcel_data['eventLog']]
+
+
+class Parcel(BaseParcel):
     """Object representation of :class:`inpost.api.Inpost` compartment properties
 
     :param parcel_data: :class:`dict` containing all parcel data
@@ -19,7 +32,8 @@ class Parcel:
 
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         """Constructor method"""
-        self.shipment_number: str = parcel_data['shipmentNumber']
+        super().__init__(parcel_data, logger)
+        # self.shipment_number: str = parcel_data['shipmentNumber']
         self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
         self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data['shipmentType']]
         self._open_code: str | None = parcel_data['openCode'] if 'openCode' in parcel_data else None
@@ -27,7 +41,7 @@ class Parcel:
             if 'qrCode' in parcel_data else None
         self.stored_date: arrow | None = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
         self.pickup_date: arrow | None = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
-        self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
+        # self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
         self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
             if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'], logger=self._log)
@@ -37,10 +51,10 @@ class Parcel:
         self.multi_compartment: MultiCompartment | None = MultiCompartment(
             parcel_data['multiCompartment'], logger=self._log) if 'multiCompartment' in parcel_data else None
         self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
-        self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
+        # self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
         self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
-        self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
-                                          for event in parcel_data['eventLog']]
+        # self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
+        #                                   for event in parcel_data['eventLog']]
         self.avizo_transaction_status: str = parcel_data['avizoTransactionStatus']
         self.shared_to: List[SharedTo] = [SharedTo(sharedto_data=person, logger=self._log)
                                           for person in parcel_data['sharedTo']]
@@ -236,6 +250,24 @@ class Parcel:
     #     return
 
 
+class ReturnParcel(BaseParcel):
+    def __init__(self, parcel_data: dict, logger: logging.Logger):
+        super().__init__(parcel_data, logger)
+        self.uuid: str = parcel_data['uuid']
+        self.rma: str = parcel_data['rma']
+        self.organization_name: str = parcel_data['organizationName']
+        self.created_date: arrow = parcel_data['createdDate']
+        self.accepted_date: arrow = parcel_data['acceptedDate']
+        self.expiry_date: arrow = parcel_data['expiryDate']
+        self.sent_date: arrow = parcel_data['sentDate']
+        self.delivered_date: arrow = parcel_data['deliveredDate']
+        self.order_number: str = parcel_data['orderNumber']
+        self.form_type: str = parcel_data['formType']
+
+
+
+
+
 class Receiver:
     """Object representation of :class:`Parcel` receiver
 
@@ -380,6 +412,7 @@ class Operations:
         self.can_share_to_observe: bool = operations_data['canShareToObserve']
         self.can_share_open_code: bool = operations_data['canShareOpenCode']
         self.can_share_parcel: bool = operations_data['canShareParcel']
+        self.send: bool = operations_data['send']
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
         self._log.debug('created')
@@ -400,14 +433,14 @@ class EventLog:
     def __init__(self, eventlog_data: dict, logger: logging.Logger):
         """Constructor method"""
         self.type: str = eventlog_data['type']
-        self.name: ParcelStatus = ParcelStatus[eventlog_data['name']]
+        self.name: ParcelStatus | ReturnsStatus = ParcelStatus[eventlog_data['name']] if self.type == 'PARCEL_STATUS' else ReturnsStatus[eventlog_data['name']]
         self.date: arrow = get(eventlog_data['date'])
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
         self._log.debug('created')
 
-        if self.name == ParcelStatus.UNKNOWN:
-            self._log.debug(f'unknown parcel status: {eventlog_data["name"]}')
+        if self.name == ParcelStatus.UNKNOWN or self.name == ReturnsStatus.UNKNOWN:
+            self._log.debug(f'unknown {self.type}: {eventlog_data["name"]}')
 
     def __repr__(self):
         fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')

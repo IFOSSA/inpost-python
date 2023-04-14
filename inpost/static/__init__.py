@@ -3,7 +3,7 @@ from .parcels import Parcel, Receiver, Sender, PickupPoint, MultiCompartment, Op
 from .headers import appjson
 from .statuses import ParcelCarrierSize, ParcelLockerSize, ParcelDeliveryType, ParcelShipmentType, \
     ParcelAdditionalInsurance, ParcelType, ParcelOwnership, CompartmentExpectedStatus, CompartmentActualStatus, \
-    ParcelServiceName, ParcelStatus
+    ParcelServiceName, ParcelStatus, ReturnsStatus
 from .exceptions import NoParcelError, UnidentifiedParcelError, ParcelTypeError, NotAuthenticatedError, ReAuthenticationError, \
     PhoneNumberError, SmsCodeError, RefreshTokenError, UnidentifiedAPIError, UserLocationError, \
     UnidentifiedError, NotFoundError, UnauthorizedError, SingleParamError, MissingParamsError

@@ -160,6 +160,13 @@ class ParcelStatus(ParcelBase):
     CANCELED_REDIRECT_TO_BOX = 'Anulowano przekierowanie do paczkomatu'  # TODO: translate from app
 
 
+class ReturnsStatus(ParcelBase):  # TODO: translate from app and fill missing ones
+    ACCEPTED = 'Zaakceptowano'
+    USED = 'Nadano'
+    DELIVERED = 'Dostarczono'
+    UNKNOWN = 'UNKNOWN DATA'
+
+
 class ParcelOwnership(ParcelBase):
     """:class:`Enum` that holds parcel ownership types"""
     UNKNOWN = 'UNKNOWN DATA'
