@@ -962,6 +962,7 @@ class Inpost:
             raise NotAuthenticatedError(reason='Not logged in')
 
         async with await self.sess.post(url=shared,
+                                        headers={'Authorization': self.auth_token},
                                         json={
                                             'parcels': [
                                                 {
