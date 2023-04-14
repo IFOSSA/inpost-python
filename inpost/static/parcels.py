@@ -265,9 +265,6 @@ class ReturnParcel(BaseParcel):
         self.form_type: str = parcel_data['formType']
 
 
-
-
-
 class Receiver:
     """Object representation of :class:`Parcel` receiver
 
@@ -412,7 +409,7 @@ class Operations:
         self.can_share_to_observe: bool = operations_data['canShareToObserve']
         self.can_share_open_code: bool = operations_data['canShareOpenCode']
         self.can_share_parcel: bool = operations_data['canShareParcel']
-        self.send: bool = operations_data['send']
+        self.send: bool | None = operations_data['send'] if 'send' in operations_data else None
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
         self._log.debug('created')
@@ -433,7 +430,8 @@ class EventLog:
     def __init__(self, eventlog_data: dict, logger: logging.Logger):
         """Constructor method"""
         self.type: str = eventlog_data['type']
-        self.name: ParcelStatus | ReturnsStatus = ParcelStatus[eventlog_data['name']] if self.type == 'PARCEL_STATUS' else ReturnsStatus[eventlog_data['name']]
+        self.name: ParcelStatus | ReturnsStatus = ParcelStatus[
+            eventlog_data['name']] if self.type == 'PARCEL_STATUS' else ReturnsStatus[eventlog_data['name']]
         self.date: arrow = get(eventlog_data['date'])
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
