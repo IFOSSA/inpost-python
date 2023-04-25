@@ -9,7 +9,20 @@ from arrow import get, arrow
 from inpost.static.statuses import *
 
 
-class Parcel:
+class BaseParcel:
+    def __init__(self, parcel_data: dict, logger: logging.Logger):
+        self.shipment_number: str = parcel_data['shipmentNumber']
+        self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
+        self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
+        # self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
+        #     if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
+        self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
+        self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
+        self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
+                                          for event in parcel_data['eventLog']]
+
+
+class Parcel(BaseParcel):
     """Object representation of :class:`inpost.api.Inpost` compartment properties
 
     :param parcel_data: :class:`dict` containing all parcel data
@@ -19,7 +32,8 @@ class Parcel:
 
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         """Constructor method"""
-        self.shipment_number: str = parcel_data['shipmentNumber']
+        super().__init__(parcel_data, logger)
+        # self.shipment_number: str = parcel_data['shipmentNumber']
         self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
         self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data['shipmentType']]
         self._open_code: str | None = parcel_data['openCode'] if 'openCode' in parcel_data else None
@@ -27,7 +41,7 @@ class Parcel:
             if 'qrCode' in parcel_data else None
         self.stored_date: arrow | None = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
         self.pickup_date: arrow | None = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
-        self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
+        # self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
         self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
             if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'], logger=self._log)
@@ -37,10 +51,10 @@ class Parcel:
         self.multi_compartment: MultiCompartment | None = MultiCompartment(
             parcel_data['multiCompartment'], logger=self._log) if 'multiCompartment' in parcel_data else None
         self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
-        self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
+        # self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
         self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
-        self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
-                                          for event in parcel_data['eventLog']]
+        # self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
+        #                                   for event in parcel_data['eventLog']]
         self.avizo_transaction_status: str = parcel_data['avizoTransactionStatus']
         self.shared_to: List[SharedTo] = [SharedTo(sharedto_data=person, logger=self._log)
                                           for person in parcel_data['sharedTo']]
@@ -63,7 +77,7 @@ class Parcel:
             self._log.debug(f'unexpected ownership status: {parcel_data["ownershipStatus"]}')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
     def __str__(self):
@@ -83,7 +97,7 @@ class Parcel:
             self._log.debug('got open code')
             return self._open_code
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
 
     @property
@@ -97,7 +111,7 @@ class Parcel:
             self._log.debug('got qr image')
             return self._qr_code.qr_image
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
 
     @property
@@ -111,7 +125,7 @@ class Parcel:
             self._log.debug('got compartment properties')
             return self._compartment_properties
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
 
     @compartment_properties.setter
@@ -126,7 +140,7 @@ class Parcel:
             self._compartment_properties = CompartmentProperties(compartmentproperties_data=compartmentproperties_data,
                                                                  logger=self._log)
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
 
     @property
     def compartment_location(self):
@@ -139,20 +153,20 @@ class Parcel:
             self._log.debug('got compartment location')
             return self._compartment_properties.location if self._compartment_properties else None
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
 
     @compartment_location.setter
-    def compartment_location(self, location_data):
+    def compartment_location(self, location_data: dict):
         """Set compartment location for :class:`Parcel`
         :param location_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`
         :type location_data: CompartmentProperties"""
-        self._log.debug('setting compartment location')
+        self._log.debug(f'setting compartment location with {location_data}')
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug('compartment location set')
             self._compartment_properties.location = location_data
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
 
     @property
     def compartment_status(self) -> CompartmentActualStatus | None:
@@ -166,17 +180,17 @@ class Parcel:
             self._log.debug('got compartment status')
             return self._compartment_properties.status if self._compartment_properties else None
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
 
     @compartment_status.setter
     def compartment_status(self, status):
-        self._log.debug('setting compartment status')
+        self._log.debug(f'setting compartment status with {status}')
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug('compartment status set')
             self._compartment_properties.status = status
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
 
     @property
     def compartment_open_data(self):
@@ -193,7 +207,7 @@ class Parcel:
                 'receiverPhoneNumber': self.receiver.phone_number
             }
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
 
     @property
@@ -211,8 +225,44 @@ class Parcel:
                 'accuracy': round(random.uniform(1, 4), 1)
             }
 
-        self._log.debug('wrong ParcelShipmentType')
+        self._log.debug(f'wrong ParcelShipmentType: {repr(self.shipment_type)}')
         return None
+
+    @property
+    def is_multicompartment(self):
+        """Specifies if parcel is in multi compartment
+        :return: True if parcel is in multicompartment
+        :rtype: bool"""
+        return self.multi_compartment is not None
+
+    @property
+    def is_main_multicompartment(self):
+        """Specifies if parcel is main parcel in multi compartment
+        :return: True if parcel is in multicompartment
+        :rtype: bool"""
+        if self.is_multicompartment:
+            return self.multi_compartment.shipment_numbers is not None
+
+        return None
+
+    # @property
+    # def get_from_multicompartment(self):
+    #     return
+
+
+class ReturnParcel(BaseParcel):
+    def __init__(self, parcel_data: dict, logger: logging.Logger):
+        super().__init__(parcel_data, logger)
+        self.uuid: str = parcel_data['uuid']
+        self.rma: str = parcel_data['rma']
+        self.organization_name: str = parcel_data['organizationName']
+        self.created_date: arrow = parcel_data['createdDate']
+        self.accepted_date: arrow = parcel_data['acceptedDate']
+        self.expiry_date: arrow = parcel_data['expiryDate']
+        self.sent_date: arrow = parcel_data['sentDate']
+        self.delivered_date: arrow = parcel_data['deliveredDate']
+        self.order_number: str = parcel_data['orderNumber']
+        self.form_type: str = parcel_data['formType']
 
 
 class Receiver:
@@ -233,7 +283,7 @@ class Receiver:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
@@ -253,7 +303,7 @@ class Sender:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
     def __str__(self) -> str:
@@ -296,7 +346,7 @@ class PickupPoint:
             self._log.debug(f'unknown delivery type: {pickuppoint_data["type"]}')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
     def __str__(self) -> str:
@@ -332,7 +382,7 @@ class MultiCompartment:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
@@ -359,12 +409,13 @@ class Operations:
         self.can_share_to_observe: bool = operations_data['canShareToObserve']
         self.can_share_open_code: bool = operations_data['canShareOpenCode']
         self.can_share_parcel: bool = operations_data['canShareParcel']
+        self.send: bool | None = operations_data['send'] if 'send' in operations_data else None
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
@@ -379,17 +430,18 @@ class EventLog:
     def __init__(self, eventlog_data: dict, logger: logging.Logger):
         """Constructor method"""
         self.type: str = eventlog_data['type']
-        self.name: ParcelStatus = ParcelStatus[eventlog_data['name']]
+        self.name: ParcelStatus | ReturnsStatus = ParcelStatus[
+            eventlog_data['name']] if self.type == 'PARCEL_STATUS' else ReturnsStatus[eventlog_data['name']]
         self.date: arrow = get(eventlog_data['date'])
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
         self._log.debug('created')
 
-        if self.name == ParcelStatus.UNKNOWN:
-            self._log.debug(f'unknown parcel status: {eventlog_data["name"]}')
+        if self.name == ParcelStatus.UNKNOWN or self.name == ReturnsStatus.UNKNOWN:
+            self._log.debug(f'unknown {self.type}: {eventlog_data["name"]}')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
@@ -411,7 +463,7 @@ class SharedTo:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
@@ -431,7 +483,7 @@ class QRCode:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
     @property
@@ -482,7 +534,7 @@ class CompartmentLocation:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
@@ -505,7 +557,7 @@ class CompartmentProperties:
         self._log.debug('created')
 
     def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
     @property

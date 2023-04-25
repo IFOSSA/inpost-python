@@ -89,6 +89,11 @@ class SingleParamError(BaseInpostError):
     pass
 
 
+class MissingParamsError(BaseInpostError):
+    """Is raised when none of params are filled"""
+    pass
+
+
 class UnidentifiedError(BaseInpostError):
     """Is raised when no other error match"""
     pass

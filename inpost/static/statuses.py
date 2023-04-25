@@ -15,10 +15,6 @@ class Meta(EnumMeta):  # temporary handler for unexpected keys in enums
         except KeyError as error:
             return cls.UNKNOWN
 
-    def __repr__(self):
-        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
-        return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
-
     def get_all(cls):
         return [getattr(cls, name) for name in cls.__members__]
 
@@ -61,6 +57,10 @@ class ParcelBase(Enum, metaclass=Meta):
             return self.name == other.name
 
         return False
+
+    def __repr__(self):
+        fields = tuple(f"{k}={v}" for k, v in self.__dict__.items())
+        return self.__class__.__name__ + str(tuple(sorted(fields))).replace("\'", "")
 
 
 class ParcelCarrierSize(ParcelBase):
@@ -143,12 +143,12 @@ class ParcelStatus(ParcelBase):
     DELIVERED = 'Doręczona'
     CANCELED = 'Anulowana'  # TODO: translate from app
     CLAIMED = 'Zareklamowana'
-    STACK_IN_CUSTOMER_SERVICE_POINT = 'Umieszczona w punkcie obsługi klienta'  # TODO: translate from app
+    STACK_IN_CUSTOMER_SERVICE_POINT = 'Przesyłka magazynowana w punkcie obsługi klienta'  # TODO: translate from app
     STACK_PARCEL_PICKUP_TIME_EXPIRED = 'Upłynął czas odbioru'  # TODO: translate from app
     UNSTACK_FROM_CUSTOMER_SERVICE_POINT = '?'  # TODO: translate from app
     COURIER_AVIZO_IN_CUSTOMER_SERVICE_POINT = 'Przekazana do punktu obsługi klienta'  # TODO: translate from app
     TAKEN_BY_COURIER_FROM_CUSTOMER_SERVICE_POINT = 'Odebrana przez kuriera z punktu obsługi klienta'  # TODO: translate from app
-    STACK_IN_BOX_MACHINE = 'Paczka w paczkomacie'  # TODO: translate from app
+    STACK_IN_BOX_MACHINE = 'Przesyłka magazynowana w paczkomacie tymczasowym'
     STACK_PARCEL_IN_BOX_MACHINE_PICKUP_TIME_EXPIRED = 'Upłynął czas odbioru z paczkomatu'  # TODO: translate from app
     UNSTACK_FROM_BOX_MACHINE = 'Odebrana z paczkomatu'  # TODO: translate from app
     ADOPTED_AT_SORTING_CENTER = 'Przyjęta w sortowni'
@@ -158,6 +158,13 @@ class ParcelStatus(ParcelBase):
     UNDELIVERED_COD_CASH_RECEIVER = 'Nie dostarczono z powodu nieopłacenia'  # TODO: translate from app
     REDIRECT_TO_BOX = 'Przekierowana do paczkomatu'  # TODO: translate from app
     CANCELED_REDIRECT_TO_BOX = 'Anulowano przekierowanie do paczkomatu'  # TODO: translate from app
+
+
+class ReturnsStatus(ParcelBase):  # TODO: translate from app and fill missing ones
+    ACCEPTED = 'Zaakceptowano'
+    USED = 'Nadano'
+    DELIVERED = 'Dostarczono'
+    UNKNOWN = 'UNKNOWN DATA'
 
 
 class ParcelOwnership(ParcelBase):
