@@ -21,3 +21,4 @@ returns: str = 'https://api-inmobile-pl.easypack24.net/v1/returns/parcels/'  # g
 parcel_prices: str = 'https://api-inmobile-pl.easypack24.net/v1/prices/parcels'  # get
 tickets: str = 'https://api-inmobile-pl.easypack24.net/v1/returns/tickets'  # get
 logout: str = 'https://api-inmobile-pl.easypack24.net/v1/logout'  # post
+parcel_notifications: str = 'https://api-inmobile-pl.easypack24.net/v2/notifications?type=PUSH%2CNEWS%2CTILE'  # get
