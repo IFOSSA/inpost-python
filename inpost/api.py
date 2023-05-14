@@ -502,7 +502,7 @@ class Inpost:
             self._log.debug(f'authorization token missing')
             raise NotAuthenticatedError(reason='Not logged in')
 
-        resp = await self.request(method='get',
+        resp = await self.request(method='post',
                                   action=f"open compartment for {self.parcel.shipment_number}",
                                   url=compartment_open,
                                   auth=True,
@@ -633,6 +633,33 @@ class Inpost:
                 return True
 
         return False
+
+    async def reopen_compartment(self) -> bool:
+        """Reopens compartment for `Inpost.parcel` object
+
+        :return: True if compartment gets reopened
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        self._log.info(f'reopening compartment for {self.parcel.shipment_number}')
+
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
+        resp = await self.request(method='post',
+                                  action=f"reopen compartment for {self.parcel.shipment_number}",
+                                  url=compartment_open,
+                                  auth=True,
+                                  headers=None,
+                                  data={'sessionUuid': self.parcel.compartment_properties.session_uuid},
+                                  autorefresh=True)
+
+        if resp.status == 200:
+            self._log.debug(f'opened compartment for {self.parcel.shipment_number}')
+            return True
 
     async def get_prices(self) -> dict:
         """Fetches prices for inpost services
