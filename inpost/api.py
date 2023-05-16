@@ -107,6 +107,17 @@ class Inpost:
         inp._log.info(f'initialized by from_phone_number')
         return inp
 
+    @classmethod
+    async def from_dict(cls, data: dict):
+        inp = cls()
+        await inp.set_phone_number(data['phone_number'])
+        inp.sms_code = data['sms_code']
+        inp.auth_token = data['auth_token']
+        inp.refr_token = data['refr_token']
+
+        inp._log.info(f'initialized by from_dict')
+        return inp
+
     async def set_phone_number(self, phone_number: str | int) -> bool:
         """Set :class:`Inpost` phone number required for verification
 
