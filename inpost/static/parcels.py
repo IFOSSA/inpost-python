@@ -14,8 +14,6 @@ class BaseParcel:
         self.shipment_number: str = parcel_data['shipmentNumber']
         self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
         self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
-        # self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
-        #     if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
         self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
         self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
