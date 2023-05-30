@@ -1,8 +1,9 @@
+import logging
+from typing import List
+
 from aiohttp import ClientSession, ClientResponse
 from aiohttp.typedefs import StrOrURL
-from typing import List
-import logging
-from arrow import utcnow
+
 from inpost.static import *
 
 
@@ -77,6 +78,9 @@ class Inpost:
 
         if autorefresh and resp.status == 401:
             await self.refresh_token()
+            headers_.update(
+                {'Authorization': self.auth_token}
+            )
             resp = await self.sess.request(method, url, headers=headers_, json=data, **kwargs)
 
         match resp.status:
