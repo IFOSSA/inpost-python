@@ -40,7 +40,7 @@ class Parcel(BaseParcel):
         self.pickup_date: arrow | None = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
         self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
             if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
-        self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'], logger=self._log) if 'reveiver' in parcel_data else None
+        self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'], logger=self._log) if 'receiver' in parcel_data else None
         self.sender: Sender = Sender(sender_data=parcel_data['sender'], logger=self._log) if 'sender' in parcel_data else None
         self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint'], logger=self._log) \
             if 'pickUpPoint' in parcel_data else None
