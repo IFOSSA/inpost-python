@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "inpost"
-version = "0.0.10"
+version = "0.1.2"
 description = "Asynchronous InPost package allowing you to manage existing incoming parcels without mobile app"
 authors = ["loboda4450 <loboda4450@gmail.com>", "MrKazik99 <mrkazik99@gmail.com>"]
 maintainers = ["loboda4450 <loboda4450@gmail.com>"]
@@ -13,6 +13,7 @@ packages = [
     ]
 classifiers = [
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Framework :: aiohttp",
         "Intended Audience :: Developers",
         "Operating System :: Microsoft :: Windows",

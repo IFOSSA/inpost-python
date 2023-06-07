@@ -9,6 +9,7 @@ parcels: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/tracked'  # ge
 parcel: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/tracked/'  # get
 multi: str = 'https://api-inmobile-pl.easypack24.net/v3/parcels/multi/'  # get
 collect: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/validate'  # post
+reopen: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/compartment/reopen'  # post
 compartment_open: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/compartment/open'  # post
 compartment_status: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/compartment/status'  # post
 terminate_collect_session: str = 'https://api-inmobile-pl.easypack24.net/v1/collect/terminate'  # post

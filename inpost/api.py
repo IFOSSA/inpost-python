@@ -1,8 +1,9 @@
+import logging
+from typing import List
+
 from aiohttp import ClientSession, ClientResponse
 from aiohttp.typedefs import StrOrURL
-from typing import List
-import logging
-from arrow import utcnow
+
 from inpost.static import *
 
 
@@ -77,6 +78,9 @@ class Inpost:
 
         if autorefresh and resp.status == 401:
             await self.refresh_token()
+            headers_.update(
+                {'Authorization': self.auth_token}
+            )
             resp = await self.sess.request(method, url, headers=headers_, json=data, **kwargs)
 
         match resp.status:
@@ -105,6 +109,17 @@ class Inpost:
         inp = cls()
         await inp.set_phone_number(phone_number=phone_number)
         inp._log.info(f'initialized by from_phone_number')
+        return inp
+
+    @classmethod
+    async def from_dict(cls, data: dict):
+        inp = cls()
+        await inp.set_phone_number(data['phone_number'])
+        inp.sms_code = data['sms_code']
+        inp.auth_token = data['auth_token']
+        inp.refr_token = data['refr_token']
+
+        inp._log.info(f'initialized by from_dict')
         return inp
 
     async def set_phone_number(self, phone_number: str | int) -> bool:
@@ -502,7 +517,7 @@ class Inpost:
             self._log.debug(f'authorization token missing')
             raise NotAuthenticatedError(reason='Not logged in')
 
-        resp = await self.request(method='get',
+        resp = await self.request(method='post',
                                   action=f"open compartment for {self.parcel.shipment_number}",
                                   url=compartment_open,
                                   auth=True,
@@ -633,6 +648,33 @@ class Inpost:
                 return True
 
         return False
+
+    async def reopen_compartment(self) -> bool:
+        """Reopens compartment for `Inpost.parcel` object
+
+        :return: True if compartment gets reopened
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnauthorizedError: Unauthorized access to inpost services,
+        :raises NotFoundError: Phone number not found
+        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        self._log.info(f'reopening compartment for {self.parcel.shipment_number}')
+
+        if not self.auth_token:
+            self._log.debug(f'authorization token missing')
+            raise NotAuthenticatedError(reason='Not logged in')
+
+        resp = await self.request(method='post',
+                                  action=f"reopen compartment for {self.parcel.shipment_number}",
+                                  url=compartment_open,
+                                  auth=True,
+                                  headers=None,
+                                  data={'sessionUuid': self.parcel.compartment_properties.session_uuid},
+                                  autorefresh=True)
+
+        if resp.status == 200:
+            self._log.debug(f'opened compartment for {self.parcel.shipment_number}')
+            return True
 
     async def get_prices(self) -> dict:
         """Fetches prices for inpost services

@@ -11,11 +11,9 @@ from inpost.static.statuses import *
 
 class BaseParcel:
     def __init__(self, parcel_data: dict, logger: logging.Logger):
-        self.shipment_number: str = parcel_data['shipmentNumber']
+        self.shipment_number: str = parcel_data.get('shipmentNumber')
         self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
         self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
-        # self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
-        #     if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
         self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
         self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
         self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
@@ -33,32 +31,28 @@ class Parcel(BaseParcel):
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         """Constructor method"""
         super().__init__(parcel_data, logger)
-        # self.shipment_number: str = parcel_data['shipmentNumber']
         self._log: logging.Logger = logger.getChild(f'{__class__.__name__}.{self.shipment_number}')
         self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data['shipmentType']]
-        self._open_code: str | None = parcel_data['openCode'] if 'openCode' in parcel_data else None
+        self._open_code: str | None = parcel_data.get('openCode', None)
         self._qr_code: QRCode | None = QRCode(qrcode_data=parcel_data['qrCode'], logger=self._log) \
             if 'qrCode' in parcel_data else None
         self.stored_date: arrow | None = get(parcel_data['storedDate']) if 'storedDate' in parcel_data else None
         self.pickup_date: arrow | None = get(parcel_data['pickUpDate']) if 'pickUpDate' in parcel_data else None
-        # self.expiry_date: arrow | None = get(parcel_data['expiryDate']) if 'expiryDate' in parcel_data else None
         self.parcel_size: ParcelLockerSize | ParcelCarrierSize = ParcelLockerSize[parcel_data['parcelSize']] \
             if self.shipment_type == ParcelShipmentType.parcel else ParcelCarrierSize[parcel_data['parcelSize']]
-        self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'], logger=self._log)
-        self.sender: Sender = Sender(sender_data=parcel_data['sender'], logger=self._log)
+        self.receiver: Receiver = Receiver(receiver_data=parcel_data['receiver'], logger=self._log) if 'receiver' in parcel_data else None
+        self.sender: Sender = Sender(sender_data=parcel_data['sender'], logger=self._log) if 'sender' in parcel_data else None
         self.pickup_point: PickupPoint = PickupPoint(pickuppoint_data=parcel_data['pickUpPoint'], logger=self._log) \
             if 'pickUpPoint' in parcel_data else None
         self.multi_compartment: MultiCompartment | None = MultiCompartment(
             parcel_data['multiCompartment'], logger=self._log) if 'multiCompartment' in parcel_data else None
-        self.is_end_off_week_collection: bool = parcel_data['endOfWeekCollection']
-        # self.operations: Operations = Operations(operations_data=parcel_data['operations'], logger=self._log)
-        self.status: ParcelStatus = ParcelStatus[parcel_data['status']]
-        # self.event_log: List[EventLog] = [EventLog(eventlog_data=event, logger=self._log)
-        #                                   for event in parcel_data['eventLog']]
-        self.avizo_transaction_status: str = parcel_data['avizoTransactionStatus']
+        self.is_end_off_week_collection: bool | None = parcel_data.get('endOfWeekCollection', None)
+        self.status: ParcelStatus = ParcelStatus[parcel_data['status']] if 'status' in parcel_data else None
+        self.avizo_transaction_status: str | None = parcel_data.get('avizoTransactionStatus', None)
         self.shared_to: List[SharedTo] = [SharedTo(sharedto_data=person, logger=self._log)
-                                          for person in parcel_data['sharedTo']]
-        self.ownership_status: ParcelOwnership = ParcelOwnership[parcel_data['ownershipStatus']]
+                                          for person in parcel_data['sharedTo']] if 'sharedTo' in parcel_data else None
+        self.ownership_status: ParcelOwnership = ParcelOwnership[parcel_data['ownershipStatus']] if 'ownershipStatus' in parcel_data else None
+        self.economy_parcel: bool | None = parcel_data.get('economyParcel', None)
         self._compartment_properties: CompartmentProperties | None = None
 
         self._log.debug(f'created parcel with shipment number {self.shipment_number}')
@@ -338,6 +332,7 @@ class PickupPoint:
         self.image_url: str = pickuppoint_data['imageUrl']
         self.easy_access_zone: bool = pickuppoint_data['easyAccessZone']
         self.air_sensor: bool = pickuppoint_data['airSensor']
+        self.air_sensor_data: AirSensorData | None = AirSensorData(pickuppoint_data['airSensorData']) if 'airSensorData' in pickuppoint_data else None
 
         self._log: logging.Logger = logger.getChild(__class__.__name__)
         self._log.debug('created')
@@ -604,3 +599,25 @@ class CompartmentProperties:
 
         if self._status == CompartmentActualStatus.UNKNOWN and isinstance(status_data, str):
             self._log.debug(f'unexpected compartment actual status: {status_data}')
+
+
+class AirSensorData:
+    """Object representation of :class:`Parcel` air sensor data
+
+    :param airsensor_data: :class:`dict` containing air sensor data for :class:`Parcel`
+    :type airsensor_data: dict
+    :param logger: :class:`logging.Logger` parent instance
+    :type logger: logging.Logger"""
+    def __init__(self, airsensor_data: dict, logger: logging.Logger):
+        self.updated_until: arrow = airsensor_data['updatedUntil']
+        self.air_quality: str = airsensor_data['airQuality']
+        self.temperature: float = airsensor_data['temperature']
+        self.humidity: float = airsensor_data['humidity']
+        self.pressure: float = airsensor_data['pressure']
+        self.pm25_value: float = airsensor_data['pollutants']['pm25']['value']
+        self.pm25_percent: float = airsensor_data['pollutants']['pm25']['percent']
+        self.pm10_value: float = airsensor_data['pollutants']['pm10']['value']
+        self.pm10_percent: float = airsensor_data['pollutants']['pm10']['percent']
+
+        self._log: logging.Logger = logger.getChild(__class__.__name__)
+        self._log.debug('created')
