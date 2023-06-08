@@ -99,7 +99,7 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     @classmethod
-    async def from_phone_number(cls, phone_number: str | int):
+    def from_phone_number(cls, phone_number: str | int):
         """`Classmethod` to initialize :class:`Inpost` object with phone number
 
         :param phone_number: User's Inpost phone number
@@ -107,14 +107,14 @@ class Inpost:
         if isinstance(phone_number, int):
             phone_number = str(phone_number)
         inp = cls()
-        await inp.set_phone_number(phone_number=phone_number)
+        inp.set_phone_number(phone_number=phone_number)
         inp._log.info(f'initialized by from_phone_number')
         return inp
 
     @classmethod
-    async def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict):
         inp = cls()
-        await inp.set_phone_number(data['phone_number'])
+        inp.set_phone_number(data['phone_number'])
         inp.sms_code = data['sms_code']
         inp.auth_token = data['auth_token']
         inp.refr_token = data['refr_token']
@@ -122,7 +122,7 @@ class Inpost:
         inp._log.info(f'initialized by from_dict')
         return inp
 
-    async def set_phone_number(self, phone_number: str | int) -> bool:
+    def set_phone_number(self, phone_number: str | int) -> bool:
         """Set :class:`Inpost` phone number required for verification
 
         :param phone_number: User's Inpost phone number
@@ -847,7 +847,7 @@ class Inpost:
         :raises UnidentifiedAPIError: Unexpected thing happened
         :raises ValueError: Name length exceeds 20 characters"""
 
-        self._log.info(f'adding user friend')
+        self._log.info(f'removing user friend')
 
         if not self.auth_token:
             self._log.debug(f'authorization token missing')
