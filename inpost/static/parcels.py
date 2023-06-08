@@ -59,16 +59,16 @@ class Parcel(BaseParcel):
 
         # log all unexpected things, so you can make an issue @github
         if self.shipment_type == ParcelShipmentType.UNKNOWN:
-            self._log.debug(f'unexpected shipment_type: {parcel_data["shipmentType"]}')
+            self._log.warning(f'unexpected shipment_type: {parcel_data["shipmentType"]}')
 
         if self.parcel_size == ParcelCarrierSize.UNKNOWN or self.parcel_size == ParcelLockerSize.UNKNOWN:
-            self._log.debug(f'unexpected parcel_size: {parcel_data["parcelSize"]}')
+            self._log.warning(f'unexpected parcel_size: {parcel_data["parcelSize"]}')
 
         if self.status == ParcelStatus.UNKNOWN:
-            self._log.debug(f'unexpected parcel status: {parcel_data["status"]}')
+            self._log.warning(f'unexpected parcel status: {parcel_data["status"]}')
 
         if self.ownership_status == ParcelOwnership.UNKNOWN:
-            self._log.debug(f'unexpected ownership status: {parcel_data["ownershipStatus"]}')
+            self._log.warning(f'unexpected ownership status: {parcel_data["ownershipStatus"]}')
 
     def __repr__(self):
         fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != '_log')
@@ -238,6 +238,10 @@ class Parcel(BaseParcel):
             return self.multi_compartment.shipment_numbers is not None
 
         return None
+
+    @property
+    def has_airsensor(self) -> bool:
+        return self.pickup_point.air_sensor_data is not None
 
     # @property
     # def get_from_multicompartment(self):
@@ -598,7 +602,7 @@ class CompartmentProperties:
             else CompartmentActualStatus[status_data]
 
         if self._status == CompartmentActualStatus.UNKNOWN and isinstance(status_data, str):
-            self._log.debug(f'unexpected compartment actual status: {status_data}')
+            self._log.warning(f'unexpected compartment actual status: {status_data}')
 
 
 class AirSensorData:
