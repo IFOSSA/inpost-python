@@ -12,3 +12,7 @@
 /tests/data_responses.py
 /tests/static_tests.py
 /tests/data.py
+/tests/__pycache__/
+/inpost/static/__pycache__/
+/inpost/__pycache__/
+/.idea/
