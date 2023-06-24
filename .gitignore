@@ -6,3 +6,9 @@
 /dist/
 /venv/
 /tests/.pytest_cache/
+/tests/api_tests.py
+/tests/data.json
+/tests/data.py
+/tests/data_responses.py
+/tests/static_tests.py
+/tests/data.py
