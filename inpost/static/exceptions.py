@@ -40,6 +40,12 @@ class NoParcelError(BaseInpostError):
     pass
 
 
+class UnknownStatusError(BaseInpostError):
+    """Is raised when no status matches"""
+
+    pass
+
+
 class UnidentifiedParcelError(BaseInpostError):
     """Is raised when no other :class:`Parcel` error match"""
 

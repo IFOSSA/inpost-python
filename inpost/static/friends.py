@@ -4,6 +4,7 @@ from arrow import Arrow, get
 
 
 class Friend:
+    # TODO: Create documentation
     def __init__(self, friend_data, logger: logging.Logger):
         self.uuid: str = friend_data["uuid"] if "uuid" in friend_data else None
         self.phone_number: str = friend_data["phoneNumber"]

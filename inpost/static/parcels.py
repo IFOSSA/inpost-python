@@ -6,6 +6,7 @@ from typing import List, Tuple
 import qrcode
 from arrow import arrow, get
 
+from inpost.static.exceptions import UnknownStatusError
 from inpost.static.statuses import (
     CompartmentActualStatus,
     ParcelCarrierSize,
@@ -215,21 +216,21 @@ class Parcel(BaseParcel):
             self._log.debug("got compartment status")
             return self._compartment_properties.status if self._compartment_properties else None
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @compartment_status.setter
     def compartment_status(self, status) -> None:
         self._log.debug(f"setting compartment status with {status}")
         if self._compartment_properties is None:
-            # TODO: Need to rethink what should I return
+            self._log.warning("tried to assign status to empty _compartment_properties")
             return
 
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment status set")
             self._compartment_properties.status = status
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
     def compartment_open_data(self) -> dict | None:
@@ -239,7 +240,7 @@ class Parcel(BaseParcel):
         :rtype: dict"""
         self._log.debug("getting compartment open data")
         if self.receiver is None:
-            return None  # TODO: think out
+            return None
 
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment open data")
@@ -249,7 +250,7 @@ class Parcel(BaseParcel):
                 "receiverPhoneNumber": self.receiver.phone_number,
             }
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @property
@@ -260,7 +261,7 @@ class Parcel(BaseParcel):
         :rtype: dict | None"""
         self._log.debug("getting mocked location")
         if self.pickup_point is None:
-            return None  # TODO: think out
+            return None
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got mocked location")
             return {
@@ -269,7 +270,7 @@ class Parcel(BaseParcel):
                 "accuracy": round(random.uniform(1, 4), 1),
             }
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @property
@@ -283,6 +284,7 @@ class Parcel(BaseParcel):
     @property
     def is_main_multicompartment(self) -> bool | None:
         """Specifies if parcel is main parcel in multi compartment
+
         :return: True if parcel is in multicompartment
         :rtype: bool"""
         if self.is_multicompartment and self.multi_compartment is not None:
@@ -297,13 +299,10 @@ class Parcel(BaseParcel):
 
         return None
 
-    # @property
-    # def get_from_multicompartment(self):
-    #     return
-
 
 class ReturnParcel(BaseParcel):
     # TODO: Prepare properties required to ease up access
+    # TODO: Create documentation
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         super().__init__(parcel_data, logger)
         self.uuid: str = parcel_data["uuid"]
@@ -320,6 +319,7 @@ class ReturnParcel(BaseParcel):
 
 class SentParcel(BaseParcel):
     # TODO: Recheck properties
+    # TODO: Create documentation
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         super().__init__(parcel_data, logger)
         self.origin_system: str = parcel_data.get("originSystem", None)
@@ -359,54 +359,27 @@ class SentParcel(BaseParcel):
         self.unlabeled: bool = parcel_data.get("unlabeled", None)
         self.is_end_off_week_collection: bool | None = parcel_data.get("endOfWeekCollection", None)
         self.status: ParcelStatus | None = ParcelStatus[parcel_data.get("status")]
-
-    @property
-    def open_code(self) -> int | None:
-        """Returns an open code for :class:`Parcel`
-
-        :return: Open code for :class:`Parcel`
-        :rtype: int"""
-        self._log.debug("getting open code")
-        if self.shipment_type == ParcelShipmentType.parcel:
-            self._log.debug("got open code")
-            return self.quick_send_code
-
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
-        return None
-
-    @property
-    def generate_qr_image(self) -> BytesIO | None:
-        """Returns a QR image for :class:`Parcel`
-
-        :return: QR image for :class:`Parcel`
-        :rtype: BytesIO"""
-        self._log.debug("generating qr image")
-        if self.shipment_type == ParcelShipmentType.parcel and self._qr_code is not None:
-            self._log.debug("got qr image")
-            return self._qr_code.qr_image
-
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
-        return None
+        self._compartment_properties: CompartmentProperties | None = None
 
     @property
     def compartment_properties(self):
-        """Returns a compartment properties for :class:`Parcel`
+        """Returns a compartment properties for :class:`SentParcel`
 
-        :return: Compartment properties for :class:`Parcel`
+        :return: Compartment properties for :class:`SentParcel`
         :rtype: CompartmentProperties"""
-        self._log.debug("getting comparment properties")
+        self._log.debug("getting compartment properties")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment properties")
             return self._compartment_properties
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @compartment_properties.setter
     def compartment_properties(self, compartmentproperties_data: dict):
-        """Set compartment properties for :class:`Parcel`
+        """Set compartment properties for :class:`SentParcel`
 
-        :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`Parcel`
+        :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`SentParcel`
         :type compartmentproperties_data: dict"""
         self._log.debug(f"setting compartment properties with {compartmentproperties_data}")
         if self.shipment_type == ParcelShipmentType.parcel:
@@ -415,37 +388,41 @@ class SentParcel(BaseParcel):
                 compartmentproperties_data=compartmentproperties_data, logger=self._log
             )
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
     def compartment_location(self):
-        """Returns a compartment location for :class:`Parcel`
+        """Returns a compartment location for :class:`SentParcel`
 
-        :return: Compartment location for :class:`Parcel`
+        :return: Compartment location for :class:`SentParcel`
         :rtype: CompartmentLocation"""
         self._log.debug("getting compartment location")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment location")
             return self._compartment_properties.location if self._compartment_properties else None
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @compartment_location.setter
     def compartment_location(self, location_data: dict):
-        """Set compartment location for :class:`Parcel`
+        """Set compartment location for :class:`SentParcel`
         :param location_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`
         :type location_data: dict"""
         self._log.debug(f"setting compartment location with {location_data}")
+        if self._compartment_properties is None:
+            self._log.warning("tried to assign location to empty _compartment_properties")
+            return
+
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment location set")
             self._compartment_properties.location = location_data
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
     def compartment_status(self) -> CompartmentActualStatus | None:
-        """Returns a compartment status for :class:`Parcel`
+        """Returns a compartment status for :class:`SentParcel`
 
         :return: Compartment status for :class:`Parcel`
         :rtype: CompartmentActualStatus"""
@@ -455,41 +432,24 @@ class SentParcel(BaseParcel):
             self._log.debug("got compartment status")
             return self._compartment_properties.status if self._compartment_properties else None
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @compartment_status.setter
     def compartment_status(self, status):
+        # TODO: Create documentation
         self._log.debug(f"setting compartment status with {status}")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment status set")
             self._compartment_properties.status = status
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
-
-    @property
-    def compartment_open_data(self):
-        """Returns a compartment open data for :class:`Parcel`
-
-        :return: dict containing compartment open data for :class:`Parcel`
-        :rtype: dict"""
-        self._log.debug("getting compartment open data")
-        if self.shipment_type == ParcelShipmentType.parcel:
-            self._log.debug("got compartment open data")
-            return {
-                "shipmentNumber": self.shipment_number,
-                "openCode": self._open_code,
-                "receiverPhoneNumber": self.receiver.phone_number,
-            }
-
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
-        return None
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
     def mocked_location(self):
-        """Returns a mocked location for :class:`Parcel`
+        """Returns a mocked location for :class:`SentParcel`
 
-        :return: dict containing mocked location for :class:`Parcel`
+        :return: dict containing mocked location for :class:`SentParcel`
         :rtype: dict"""
         self._log.debug("getting mocked location")
         if self.shipment_type == ParcelShipmentType.parcel:
@@ -500,12 +460,8 @@ class SentParcel(BaseParcel):
                 "accuracy": round(random.uniform(1, 4), 1),
             }
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
-
-    @property
-    def has_airsensor(self) -> bool | None:
-        return self.pickup_point.air_sensor_data is not None if self.pickup_point else None
 
 
 class Receiver:
@@ -612,7 +568,7 @@ class Point:
 
         self._log.debug("created")
         if ParcelDeliveryType.UNKNOWN in self.type:
-            self._log.debug(f'unknown delivery type: {point_data["type"]}')
+            self._log.warning(f'unknown delivery type: {point_data["type"]}')
 
     def __repr__(self):
         fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != "_log")
@@ -688,13 +644,6 @@ class Payment:
     :type logger: logging.Logger"""
 
     def __init__(self, payment_details: dict, logger: logging.Logger):
-        # self.paid: bool = payment_details.get("paid")
-        # self.total_price: float = payment_details.get("totalPrice")
-        # self.insurance_price: float = payment_details.get("insurancePrice")
-        # self.end_of_week_collection_price: float = payment_details.get("endOfWeekCollectionPrice")
-        # self.shipment_discounted: bool = payment_details.get("shipmentDiscounted")
-        # self.transaction_status: str = payment_details.get("transactionStatus")
-
         self.paid = payment_details.get("paid")
         self.total_price = payment_details.get("totalPrice")
         self.insurance_price = payment_details.get("insurancePrice")
@@ -799,8 +748,13 @@ class EventLog:
         :type eventlog_data: dict
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
+        :raises UnknownStatusError: Unknown status in EventLog
         """
         self.type: str = eventlog_data["type"]
+        self.date: arrow = get(eventlog_data["date"])
+        self.details: dict | None = eventlog_data.get("details")
+        self._log: logging.Logger = logger.getChild(self.__class__.__name__)
+
         if self.type == "PARCEL_STATUS":
             self.name = ParcelStatus[eventlog_data.get("name")]
         elif self.type == "RETURN_STATUS":
@@ -808,15 +762,13 @@ class EventLog:
         elif self.type == "PAYMENT":
             self.name = PaymentStatus[eventlog_data.get("name")]
         else:
-            ...
-        self.date: arrow = get(eventlog_data["date"])
-        self.details: dict | None = eventlog_data.get("details")
+            self._log.warning(f'Unknown status type {eventlog_data.get("name")}!')
+            raise UnknownStatusError(reason=eventlog_data.get("name"))
 
-        self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
 
         if self.name == ParcelStatus.UNKNOWN or self.name == ReturnsStatus.UNKNOWN:
-            self._log.debug(f'unknown {self.type}: {eventlog_data["name"]}')
+            self._log.warning(f'unknown {self.type}: {eventlog_data["name"]}')
 
     def __repr__(self):
         fields = tuple(f"{k}={v}" for k, v in self.__dict__.items() if k != "_log")

@@ -833,7 +833,13 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def blik_status(self) -> bool:
-        # TODO: Create documentation
+        """Checks if user has active blik session
+
+
+        :return: True if user has no active blik sessions else False
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        """
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -896,7 +902,19 @@ class Inpost:
     async def create_blik_session(
         self, amount: float | str, shipment_number: str, currency: str = "PLN"
     ) -> None | dict:
-        # TODO: Create documentation
+        """Creates blik session for sending parcel
+
+        :param amount: amount of money that has to be paid
+        :type amount: float | str
+        :param shipment_number: shipment number of parcel that is being sent
+        :type shipment_number: str
+        :param currency: currency of `amount`
+        :type currency: str
+        :return: True if user has no active blik sessions else False
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -1149,7 +1167,17 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:
-        # TODO: Create documentation
+        """Fetches parcel friends
+
+        :param shipment_number: shipment number of parcel that friends are fetched
+        :type shipment_number: int | str
+        :param parse: switch for parsing response
+        :type parse: bool
+        :return: dict containing friends data
+        :rtype: dict
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
         self._log.info("getting parcel friends")
 
         if not self.auth_token:

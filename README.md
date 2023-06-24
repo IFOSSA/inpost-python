@@ -17,13 +17,19 @@ Fully async Inpost library using Python 3.10.
 ```python
 from inpost.api import Inpost
 
-inp = await Inpost.from_phone_number('555333444')
+inp = Inpost('555333444')
 await inp.send_sms_code():
 ...
 if await inp.confirm_sms_code(123321):
    print('Congratulations, you initialized successfully!')
 ```
 
+## Before you contribute
+
+Install linters and checkers, unlinted pull requests will not be approved
+```commandline
+poetry run pre-commit install
+```
 
 ## Authors
 
