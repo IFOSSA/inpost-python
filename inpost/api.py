@@ -476,9 +476,8 @@ class Inpost:
 
             return list(_parcels) if not parse else [Parcel(parcel_data=data, logger=self._log) for data in _parcels]
 
-    async def get_multi_compartment(
-        self, multi_uuid: str | int, parse: bool = False
-    ) -> dict | List[Parcel]:  # TODO: do docs
+    async def get_multi_compartment(self, multi_uuid: str | int, parse: bool = False) -> dict | List[Parcel]:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -833,7 +832,8 @@ class Inpost:
 
         raise UnidentifiedAPIError(reason=resp)
 
-    async def blik_status(self) -> bool:  # TODO: do docs
+    async def blik_status(self) -> bool:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -863,7 +863,8 @@ class Inpost:
         sender: Sender,
         receiver: Receiver,
         delivery_point: Point,
-    ) -> None | dict:  # TODO: do docs
+    ) -> None | dict:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -894,7 +895,8 @@ class Inpost:
 
     async def create_blik_session(
         self, amount: float | str, shipment_number: str, currency: str = "PLN"
-    ) -> None | dict:  # TODO: do docs
+    ) -> None | dict:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -929,7 +931,8 @@ class Inpost:
         parcel_obj: SentParcel | None = None,
         location: dict | None = None,
         drop_off_point: str | None = None,
-    ) -> SentParcel:  # TODO: do docs
+    ) -> SentParcel:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -1145,7 +1148,8 @@ class Inpost:
 
         raise UnidentifiedAPIError(reason=resp)
 
-    async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:  # TODO: do docs
+    async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:
+        # TODO: Create documentation
         self._log.info("getting parcel friends")
 
         if not self.auth_token:

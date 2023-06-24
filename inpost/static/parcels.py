@@ -222,7 +222,8 @@ class Parcel(BaseParcel):
     def compartment_status(self, status) -> None:
         self._log.debug(f"setting compartment status with {status}")
         if self._compartment_properties is None:
-            return  # TODO: think out
+            # TODO: Need to rethink what should I return
+            return
 
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment status set")
@@ -301,7 +302,8 @@ class Parcel(BaseParcel):
     #     return
 
 
-class ReturnParcel(BaseParcel):  # TODO: see properties and create
+class ReturnParcel(BaseParcel):
+    # TODO: Prepare properties required to ease up access
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         super().__init__(parcel_data, logger)
         self.uuid: str = parcel_data["uuid"]
@@ -316,7 +318,8 @@ class ReturnParcel(BaseParcel):  # TODO: see properties and create
         self.form_type: str = parcel_data["formType"]
 
 
-class SentParcel(BaseParcel):  # TODO: check properties
+class SentParcel(BaseParcel):
+    # TODO: Recheck properties
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         super().__init__(parcel_data, logger)
         self.origin_system: str = parcel_data.get("originSystem", None)

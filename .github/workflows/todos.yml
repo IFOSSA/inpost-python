@@ -8,4 +8,4 @@ jobs:
         steps:
             - uses: "actions/checkout@v3"
             - name: "TODO to Issue"
-              uses: "alstr/todo-to-issue-action@master"
+              uses: "alstr/todo-to-issue-action@v4"

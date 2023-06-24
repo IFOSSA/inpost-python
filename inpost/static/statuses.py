@@ -120,9 +120,10 @@ class ParcelType(ParcelBase):
 class PointType(ParcelBase):
     """:class: `Enum` that holds point types"""
 
+    # TODO: get known what does superpop stand for
     UNKNOWN = "UNNKOWN DATA"
     PL = "Paczkomat"
-    parcel_locker_superpop = "some paczkomat or pok stuff"  # TODO: get known what does superpop stand for
+    parcel_locker_superpop = "some paczkomat or pok stuff"
     POK = "Mobilny punkt obsługi klienta"
     POP = "Punkt odbioru paczki"
 
@@ -130,6 +131,7 @@ class PointType(ParcelBase):
 class ParcelPointOperations(ParcelBase):
     """:class: `Enum` that holds parcel operation types"""
 
+    # TODO: Probably missing something, recheck needed
     UNKNOWN = "UNNKOWN DATA"
     CREATE = "c2x-target"
     SEND = "remote-send"
@@ -185,12 +187,14 @@ class ParcelStatus(ParcelBase):
     CANCELED_REDIRECT_TO_BOX = "Anulowano przekierowanie do paczkomatu"  # TODO: translate from app
 
 
-class DeliveryType(ParcelBase):  # TODO: look for more types
+class DeliveryType(ParcelBase):
+    # TODO: look for more types
     UNKNOWN = "UNKNOWN DATA"
     BOX_MACHINE = "Paczkomat"
 
 
-class ReturnsStatus(ParcelBase):  # TODO: translate from app and fill missing ones
+class ReturnsStatus(ParcelBase):
+    # TODO: translate from app and fill missing ones
     ACCEPTED = "Zaakceptowano"
     USED = "Nadano"
     DELIVERED = "Dostarczono"
