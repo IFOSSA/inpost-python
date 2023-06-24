@@ -33,31 +33,29 @@ from inpost.static import (
     UnauthorizedError,
     UnidentifiedAPIError,
     appjson,
-    blik_status,
-    collect,
-    compartment_open,
-    compartment_status,
-    confirm_sms_code,
-    create,
-    create_blik,
-    friends,
-    friendship,
-    logout,
-    multi,
-    open_sent,
-    parcel,
-    parcel_points,
-    parcel_prices,
-    parcels,
-    refresh_token,
-    returns,
-    send_sms_code,
-    sent,
-    shared,
-    status_sent,
-    terminate_collect_session,
-    validate_friendship,
-    validate_sent,
+    blik_status_url,
+    collect_url,
+    compartment_open_url,
+    compartment_status_url,
+    confirm_sms_code_url,
+    create_blik_url,
+    create_url,
+    friendship_url,
+    logout_url,
+    multi_url,
+    open_sent_url,
+    parcel_points_url,
+    parcel_prices_url,
+    refresh_token_url,
+    returns_url,
+    send_sms_code_url,
+    sent_url,
+    shared_url,
+    status_sent_url,
+    terminate_collect_session_url,
+    tracked_url,
+    validate_friendship_url,
+    validate_sent_url,
 )
 
 
@@ -81,7 +79,6 @@ class Inpost:
         self.auth_token: str | None = None
         self.refr_token: str | None = None
         self.sess: ClientSession = ClientSession()
-        # self.parcel: Parcel | SentParcel | ReturnParcel | None = None
         self._log = logging.getLogger(f"{self.__class__.__name__}.{phone_number}")
 
         self._log.setLevel(level=logging.DEBUG)
@@ -94,7 +91,7 @@ class Inpost:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return self.logout()
+        return self.disconnect()
 
     async def request(
         self,
@@ -197,7 +194,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="send sms code",
-            url=send_sms_code,
+            url=send_sms_code_url,
             auth=False,
             headers=None,
             data={"phoneNumber": f"{self.phone_number}"},
@@ -231,7 +228,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="confirm sms code",
-            url=confirm_sms_code,
+            url=confirm_sms_code_url,
             auth=False,
             headers=appjson,
             data={"phoneNumber": self.phone_number, "smsCode": sms_code, "phoneOS": "Android"},
@@ -268,7 +265,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="refresh token",
-            url=refresh_token,
+            url=refresh_token_url,
             auth=False,
             headers=appjson,
             data={"refreshToken": self.refr_token, "phoneOS": "Android"},
@@ -303,7 +300,7 @@ class Inpost:
             raise NotAuthenticatedError(reason="Not logged in")
 
         resp = await self.request(
-            method="post", action="logout", url=logout, auth=True, headers=None, data=None, autorefresh=True
+            method="post", action="logout", url=logout_url, auth=True, headers=None, data=None, autorefresh=True
         )
 
         if resp.status == 200:
@@ -336,7 +333,7 @@ class Inpost:
 
     async def get_parcel(
         self, shipment_number: int | str, parcel_type: ParcelType = ParcelType.TRACKED, parse=False
-    ) -> dict | Parcel | SentParcel | ReturnParcel:  # TODO: make selector of which parcel we are looking for
+    ) -> dict | Parcel | SentParcel | ReturnParcel:
         """Fetches single parcel from provided shipment number
 
         :param shipment_number: Parcel's shipment number
@@ -362,16 +359,16 @@ class Inpost:
         match parcel_type:
             case ParcelType.TRACKED:
                 self._log.debug(f"getting parcel type {parcel_type}")
-                url = parcels
+                url = tracked_url
             case ParcelType.SENT:
                 self._log.debug(f"getting parcel type {parcel_type}")
-                url = sent
+                url = sent_url
             case ParcelType.RETURNS:
                 self._log.debug(f"getting parcel type {parcel_type}")
-                url = returns
+                url = returns_url
             case _:
-                self._log.error(f"wrong parcel type {parcel_type}")
-                raise ParcelTypeError(reason=f"Unknown parcel type: {parcel_type}")
+                self._log.error(f"unexpected parcel type {parcel_type}")
+                raise ParcelTypeError(reason=f"Unexpected parcel type: {parcel_type}")
 
         resp = await self.request(
             method="get",
@@ -434,13 +431,13 @@ class Inpost:
         match parcel_type:
             case ParcelType.TRACKED:
                 self._log.debug(f"getting parcel type {parcel_type}")
-                url = parcels
+                url = tracked_url
             case ParcelType.SENT:
                 self._log.debug(f"getting parcel type {parcel_type}")
-                url = sent
+                url = sent_url
             case ParcelType.RETURNS:
                 self._log.debug(f"getting parcel type {parcel_type}")
-                url = returns
+                url = returns_url
             case _:
                 self._log.error(f"wrong parcel type {parcel_type}")
                 raise ParcelTypeError(reason=f"Unknown parcel type: {parcel_type}")
@@ -479,9 +476,8 @@ class Inpost:
 
             return list(_parcels) if not parse else [Parcel(parcel_data=data, logger=self._log) for data in _parcels]
 
-    async def get_multi_compartment(
-        self, multi_uuid: str | int, parse: bool = False
-    ) -> dict | List[Parcel]:  # TODO: do docs
+    async def get_multi_compartment(self, multi_uuid: str | int, parse: bool = False) -> dict | List[Parcel]:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -489,7 +485,7 @@ class Inpost:
         resp = await self.request(
             method="get",
             action=f"parcel with multi-compartment uuid {multi_uuid}",
-            url=f"{multi}{multi_uuid}",
+            url=f"{multi_url}{multi_uuid}",
             auth=True,
             headers=None,
             data=None,
@@ -550,7 +546,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="collect compartment properties",
-            url=collect,
+            url=collect_url,
             auth=True,
             headers=None,
             data={
@@ -587,7 +583,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"open compartment for {parcel_obj.shipment_number}",
-            url=compartment_open,
+            url=compartment_open_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -624,7 +620,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="check compartment status",
-            url=compartment_status,
+            url=compartment_status_url,
             auth=True,
             headers=None,
             data={
@@ -661,7 +657,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="terminate collect session",
-            url=terminate_collect_session,
+            url=terminate_collect_session_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -675,7 +671,7 @@ class Inpost:
 
     async def collect(
         self, shipment_number: str | None = None, parcel_obj: Parcel | None = None, location: dict | None = None
-    ) -> bool:
+    ) -> Parcel | None:
         """Simplified method to open compartment
 
         :param shipment_number: Parcel's shipment number
@@ -711,16 +707,16 @@ class Inpost:
 
         self._log.info(f"collecting parcel with shipment number {parcel_obj.shipment_number}")
 
-        if await self.collect_compartment_properties(parcel_obj=parcel_obj, location=location):
-            if await self.open_compartment(parcel_obj=parcel_obj):
-                if await self.check_compartment_status(parcel_obj=parcel_obj):
-                    return True
+        if parcel_obj_ := await self.collect_compartment_properties(parcel_obj=parcel_obj, location=location):
+            if await self.open_compartment(parcel_obj=parcel_obj_):
+                if await self.check_compartment_status(parcel_obj=parcel_obj_):
+                    return parcel_obj_
 
-        return False
+        return None
 
     async def close_compartment(self, parcel_obj: Parcel) -> bool:
         """Checks whether actual compartment status and expected one matches then notifies inpost api that
-        compartment is closed
+        compartment is closed. Should be invoked after collecting parcel
 
         :param parcel_obj: Parcel object
         :type parcel_obj: Parcel
@@ -754,7 +750,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"reopen compartment for {parcel_obj.shipment_number}",
-            url=compartment_open,
+            url=compartment_open_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -776,7 +772,7 @@ class Inpost:
         operation: ParcelPointOperations = ParcelPointOperations.CREATE,
         parse: bool = True,
     ) -> dict | List[Point]:
-        """Fetches prices for inpost services
+        """Fetches parcel points for inpost services
 
         :param query: parcel point search query (e.g. GXO05M)
         :type query: str | None
@@ -819,7 +815,7 @@ class Inpost:
         resp = await self.request(
             method="get",
             action="get parcel points",
-            url=parcel_points,
+            url=parcel_points_url,
             auth=True,
             headers=None,
             params=_params,
@@ -836,7 +832,8 @@ class Inpost:
 
         raise UnidentifiedAPIError(reason=resp)
 
-    async def blik_status(self) -> bool:  # TODO: do docs
+    async def blik_status(self) -> bool:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -844,7 +841,12 @@ class Inpost:
         self._log.info("checking if user has opened blik session")
 
         resp = await self.request(
-            method="get", action="check user blik session", url=blik_status, auth=True, headers=None, autorefresh=True
+            method="get",
+            action="check user blik session",
+            url=blik_status_url,
+            auth=True,
+            headers=None,
+            autorefresh=True,
         )
 
         if resp.status == 200 and not (await resp.json())["active"]:
@@ -861,7 +863,8 @@ class Inpost:
         sender: Sender,
         receiver: Receiver,
         delivery_point: Point,
-    ) -> None | dict:  # TODO: do docs
+    ) -> None | dict:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -871,7 +874,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="create parcel",
-            url=create,
+            url=create_url,
             auth=True,
             headers=None,
             data={
@@ -892,7 +895,8 @@ class Inpost:
 
     async def create_blik_session(
         self, amount: float | str, shipment_number: str, currency: str = "PLN"
-    ) -> None | dict:  # TODO: do docs
+    ) -> None | dict:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -902,7 +906,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="create blik session",
-            url=create_blik,
+            url=create_blik_url,
             auth=True,
             headers=None,
             data={
@@ -927,7 +931,8 @@ class Inpost:
         parcel_obj: SentParcel | None = None,
         location: dict | None = None,
         drop_off_point: str | None = None,
-    ) -> SentParcel:  # TODO: do docs
+    ) -> SentParcel:
+        # TODO: Create documentation
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -953,12 +958,12 @@ class Inpost:
         if parcel_obj_.drop_off_point is None:
             raise ValueError("Missing drop-off point!")
 
-        self._log.info(f"collecting compartment properties for {parcel_obj_.shipment_number}")
+        self._log.info(f"validating send for {parcel_obj_.shipment_number}")
 
         resp = await self.request(
             method="post",
             action="validate send parcel data",
-            url=validate_sent,
+            url=validate_sent_url,
             auth=True,
             headers=None,
             data={
@@ -967,13 +972,13 @@ class Inpost:
                     "quickSendCode": parcel_obj_.quick_send_code,
                 },
                 "geoPoint": location,
-                "boxMachineName": drop_off_point if drop_off_point is not None else parcel_obj_.drop_off_point.name,
+                "boxMachineName": drop_off_point,
             },
             autorefresh=True,
         )
 
         if resp.status == 200:
-            self._log.debug(f"collected compartment properties for {parcel_obj_.shipment_number}")
+            self._log.debug(f"validated send for for {parcel_obj_.shipment_number}")
             parcel_obj_.compartment_properties = await resp.json()
             return parcel_obj_
 
@@ -997,7 +1002,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"open send compartment for {parcel_obj.shipment_number}",
-            url=open_sent,
+            url=open_sent_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -1028,7 +1033,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"reopen compartment for {parcel_obj.shipment_number}",
-            url=compartment_open,
+            url=compartment_open_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -1065,7 +1070,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action="check send compartment status",
-            url=status_sent,
+            url=status_sent_url,
             auth=True,
             headers=None,
             data={
@@ -1098,7 +1103,13 @@ class Inpost:
             raise NotAuthenticatedError(reason="Not logged in")
 
         resp = await self.request(
-            method="get", action="get prices", url=parcel_prices, auth=True, headers=None, data=None, autorefresh=True
+            method="get",
+            action="get prices",
+            url=parcel_prices_url,
+            auth=True,
+            headers=None,
+            data=None,
+            autorefresh=True,
         )
         if resp.status == 200:
             self._log.debug("got parcel prices")
@@ -1124,7 +1135,7 @@ class Inpost:
             raise NotAuthenticatedError(reason="Not logged in")
 
         resp = await self.request(
-            method="get", action="get friends", url=friendship, auth=True, headers=None, data=None, autorefresh=True
+            method="get", action="get friends", url=friendship_url, auth=True, headers=None, data=None, autorefresh=True
         )
         if resp.status == 200:
             self._log.debug("got user friends")
@@ -1137,7 +1148,8 @@ class Inpost:
 
         raise UnidentifiedAPIError(reason=resp)
 
-    async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:  # TODO: do docs
+    async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:
+        # TODO: Create documentation
         self._log.info("getting parcel friends")
 
         if not self.auth_token:
@@ -1147,7 +1159,7 @@ class Inpost:
         resp = await self.request(
             method="get",
             action="get parcel friends",
-            url=f"{friendship}{shipment_number}",
+            url=f"{friendship_url}{shipment_number}",
             auth=True,
             headers=None,
             data=None,
@@ -1207,7 +1219,7 @@ class Inpost:
             resp = await self.request(
                 method="post",
                 action="add friend",
-                url=validate_friendship,
+                url=validate_friendship_url,
                 auth=True,
                 headers=None,
                 data={"invitationCode": code},
@@ -1225,7 +1237,7 @@ class Inpost:
             resp = await self.request(
                 method="post",
                 action="add friend",
-                url=friendship,
+                url=friendship_url,
                 auth=True,
                 headers=None,
                 data={"phoneNumber": phone_number, "name": name},
@@ -1293,7 +1305,7 @@ class Inpost:
         resp = await self.request(
             method="delete",
             action="remove user friend",
-            url=f"{friendship}{uuid}",
+            url=f"{friendship_url}{uuid}",
             auth=True,
             headers=None,
             data=None,
@@ -1345,7 +1357,7 @@ class Inpost:
         resp = await self.request(
             method="patch",
             action="update user friend",
-            url=f"{friends}{uuid}",
+            url=f"{friendship_url}{uuid}",
             auth=True,
             headers=None,
             data=None,
@@ -1380,7 +1392,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"share parcel: {shipment_number}",
-            url=shared,
+            url=shared_url,
             auth=True,
             headers=None,
             data={

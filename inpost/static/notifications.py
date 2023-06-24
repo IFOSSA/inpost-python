@@ -1,8 +1,10 @@
 from arrow import Arrow, get
 
 
-class Notification:  # TODO: do docs
-    def __init__(self, notification_data):  # TODO: do docs
+class Notification:
+    # TODO: Create documentation
+    def __init__(self, notification_data):
+        # TODO: Create documentation
         self.id: str = notification_data.get("id", None)
         self.type: str = notification_data.get("type", None)
         self.action: str = notification_data.get("action", None)
