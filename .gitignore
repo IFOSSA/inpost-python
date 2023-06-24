@@ -1,0 +1,8 @@
+/log
+/otwarcie paczkomatu.xml
+/otwarcie_paczkomatu.json
+/poetry.lock
+/.mypy_cache/
+/dist/
+/venv/
+/tests/.pytest_cache/
