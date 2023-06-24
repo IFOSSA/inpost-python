@@ -4,8 +4,23 @@ from arrow import Arrow, get
 
 
 class Friend:
-    # TODO: Create documentation
-    def __init__(self, friend_data, logger: logging.Logger):
+    """Object representation of :class:`inpost.api.Inpost` friend
+
+    :param friend_data: :class:`dict` containing all friend data
+    :type friend_data: dict
+    :param logger: :class:`logging.Logger` parent instance
+    :type logger: logging.Logger
+    """
+
+    def __init__(self, friend_data: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param friend_data: :class:`dict` containing all friend data
+        :type friend_data: dict
+        :param logger: :class:`logging.Logger` parent instance
+        :type logger: logging.Logger
+        """
+
         self.uuid: str = friend_data["uuid"] if "uuid" in friend_data else None
         self.phone_number: str = friend_data["phoneNumber"]
         self.name: str = friend_data["name"]
@@ -20,7 +35,18 @@ class Friend:
             self._log.debug(f"created friendship with {self.name}")
 
     @classmethod
-    def from_invitation(cls, invitation_data, logger: logging.Logger):
+    def from_invitation(cls, invitation_data: dict, logger: logging.Logger):
+        """`Classmethod` to initialize :class:`Friend` from incitation.
+        Should be used when retrieving configuration from database.
+
+        :param invitation_data: :class:`dict` containing all friend data
+        :type invitation_data: dict
+        :param logger: :class:`logging.Logger` parent instance
+        :type logger: logging.Logger
+        :return: Friend object from provided invitation
+        :rtype: Friend
+        """
+
         return cls(
             friend_data={
                 "uuid": invitation_data["friend"]["uuid"],

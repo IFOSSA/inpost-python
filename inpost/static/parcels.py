@@ -23,6 +23,14 @@ from inpost.static.statuses import (
 
 
 class BaseParcel:
+    """Object representation of :class:`inpost.api.Inpost` parcel base. Gather things shared by all parcel types.
+
+    :param parcel_data: :class:`dict` containing all parcel data
+    :type parcel_data: dict
+    :param logger: :class:`logging.Logger` parent instance
+    :type logger: logging.Logger
+    """
+
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         self.shipment_number = parcel_data.get("shipmentNumber")
         self._log: logging.Logger = logger.getChild(f"{self.__class__.__name__}.{self.shipment_number}")
@@ -40,7 +48,8 @@ class Parcel(BaseParcel):
     :param parcel_data: :class:`dict` containing all parcel data
     :type parcel_data: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, parcel_data: dict, logger: logging.Logger):
         """Constructor method
@@ -50,6 +59,7 @@ class Parcel(BaseParcel):
         :param logger: logger instance
         :type logger: logging.Logger
         """
+
         super().__init__(parcel_data, logger)
         self._log: logging.Logger = logger.getChild(f"{self.__class__.__name__}.{self.shipment_number}")
         self.shipment_type: ParcelShipmentType = ParcelShipmentType[parcel_data.get("shipmentType")]
@@ -125,7 +135,9 @@ class Parcel(BaseParcel):
         """Returns an open code for :class:`Parcel`
 
         :return: Open code for :class:`Parcel`
-        :rtype: str"""
+        :rtype: str
+        """
+
         self._log.debug("getting open code")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got open code")
@@ -139,7 +151,9 @@ class Parcel(BaseParcel):
         """Returns a QR image for :class:`Parcel`
 
         :return: QR image for :class:`Parcel`
-        :rtype: BytesIO"""
+        :rtype: BytesIO
+        """
+
         self._log.debug("generating qr image")
         if self.shipment_type == ParcelShipmentType.parcel and self._qr_code is not None:
             self._log.debug("got qr image")
@@ -153,7 +167,9 @@ class Parcel(BaseParcel):
         """Returns a compartment properties for :class:`Parcel`
 
         :return: Compartment properties for :class:`Parcel`
-        :rtype: CompartmentProperties"""
+        :rtype: CompartmentProperties
+        """
+
         self._log.debug("getting comparment properties")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment properties")
@@ -167,7 +183,9 @@ class Parcel(BaseParcel):
         """Set compartment properties for :class:`Parcel`
 
         :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`Parcel`
-        :type compartmentproperties_data: dict"""
+        :type compartmentproperties_data: dict
+        """
+
         self._log.debug(f"setting compartment properties with {compartmentproperties_data}")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment properties set")
@@ -182,7 +200,9 @@ class Parcel(BaseParcel):
         """Returns a compartment location for :class:`Parcel`
 
         :return: Compartment location for :class:`Parcel`
-        :rtype: CompartmentLocation"""
+        :rtype: CompartmentLocation
+        """
+
         self._log.debug("getting compartment location")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment location")
@@ -196,7 +216,9 @@ class Parcel(BaseParcel):
         """Set compartment location for :class:`Parcel`
 
         :param location_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`
-        :type location_data: dict"""
+        :type location_data: dict
+        """
+
         self._log.debug(f"setting compartment location with {location_data}")
         if self.shipment_type == ParcelShipmentType.parcel and self._compartment_properties is not None:
             self._log.debug("compartment location set")
@@ -209,7 +231,9 @@ class Parcel(BaseParcel):
         """Returns a compartment status for :class:`Parcel`
 
         :return: Compartment status for :class:`Parcel`
-        :rtype: CompartmentActualStatus"""
+        :rtype: CompartmentActualStatus
+        """
+
         self._log.debug("getting compartment status")
 
         if self.shipment_type == ParcelShipmentType.parcel:
@@ -221,6 +245,12 @@ class Parcel(BaseParcel):
 
     @compartment_status.setter
     def compartment_status(self, status) -> None:
+        """Set compartment location for :class:`SentParcel`
+
+        :param status: compartment properties status for :class:`SentParcel`
+        :type status: str | CompartmentActualStatus
+        """
+
         self._log.debug(f"setting compartment status with {status}")
         if self._compartment_properties is None:
             self._log.warning("tried to assign status to empty _compartment_properties")
@@ -237,7 +267,9 @@ class Parcel(BaseParcel):
         """Returns a compartment open data for :class:`Parcel`
 
         :return: dict containing compartment open data for :class:`Parcel`
-        :rtype: dict"""
+        :rtype: dict
+        """
+
         self._log.debug("getting compartment open data")
         if self.receiver is None:
             return None
@@ -258,7 +290,9 @@ class Parcel(BaseParcel):
         """Returns a mocked location for :class:`Parcel`
 
         :return: dict containing mocked location for :class:`Parcel or None if wrong parcel shipment type`
-        :rtype: dict | None"""
+        :rtype: dict | None
+        """
+
         self._log.debug("getting mocked location")
         if self.pickup_point is None:
             return None
@@ -278,7 +312,9 @@ class Parcel(BaseParcel):
         """Specifies if parcel is in multi compartment
 
         :return: True if parcel is in multicompartment
-        :rtype: bool"""
+        :rtype: bool
+        """
+
         return self.multi_compartment is not None
 
     @property
@@ -286,7 +322,9 @@ class Parcel(BaseParcel):
         """Specifies if parcel is main parcel in multi compartment
 
         :return: True if parcel is in multicompartment
-        :rtype: bool"""
+        :rtype: bool
+        """
+
         if self.is_multicompartment and self.multi_compartment is not None:
             return self.multi_compartment.shipment_numbers is not None
 
@@ -302,8 +340,23 @@ class Parcel(BaseParcel):
 
 class ReturnParcel(BaseParcel):
     # TODO: Prepare properties required to ease up access
-    # TODO: Create documentation
+    """Object representation of :class:`inpost.api.Inpost` returned parcel
+
+    :param parcel_data: :class:`dict` containing all parcel data
+    :type parcel_data: dict
+    :param logger: :class:`logging.Logger` parent instance
+    :type logger: logging.Logger
+    """
+
     def __init__(self, parcel_data: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param parcel_data: dict containing parcel data
+        :type parcel_data: dict
+        :param logger: logger instance
+        :type logger: logging.Logger
+        """
+
         super().__init__(parcel_data, logger)
         self.uuid: str = parcel_data["uuid"]
         self.rma: str = parcel_data["rma"]
@@ -319,8 +372,23 @@ class ReturnParcel(BaseParcel):
 
 class SentParcel(BaseParcel):
     # TODO: Recheck properties
-    # TODO: Create documentation
+    """Object representation of :class:`inpost.api.Inpost` sent parcel
+
+    :param parcel_data: :class:`dict` containing all parcel data
+    :type parcel_data: dict
+    :param logger: :class:`logging.Logger` parent instance
+    :type logger: logging.Logger
+    """
+
     def __init__(self, parcel_data: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param parcel_data: dict containing parcel data
+        :type parcel_data: dict
+        :param logger: logger instance
+        :type logger: logging.Logger
+        """
+
         super().__init__(parcel_data, logger)
         self.origin_system: str = parcel_data.get("originSystem", None)
         self.quick_send_code: int = parcel_data.get("quickSendCode", None)
@@ -366,7 +434,9 @@ class SentParcel(BaseParcel):
         """Returns a compartment properties for :class:`SentParcel`
 
         :return: Compartment properties for :class:`SentParcel`
-        :rtype: CompartmentProperties"""
+        :rtype: CompartmentProperties
+        """
+
         self._log.debug("getting compartment properties")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment properties")
@@ -380,7 +450,9 @@ class SentParcel(BaseParcel):
         """Set compartment properties for :class:`SentParcel`
 
         :param compartmentproperties_data: :class:`dict` containing compartment properties data for :class:`SentParcel`
-        :type compartmentproperties_data: dict"""
+        :type compartmentproperties_data: dict
+        """
+
         self._log.debug(f"setting compartment properties with {compartmentproperties_data}")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment properties set")
@@ -395,7 +467,9 @@ class SentParcel(BaseParcel):
         """Returns a compartment location for :class:`SentParcel`
 
         :return: Compartment location for :class:`SentParcel`
-        :rtype: CompartmentLocation"""
+        :rtype: CompartmentLocation
+        """
+
         self._log.debug("getting compartment location")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment location")
@@ -408,7 +482,9 @@ class SentParcel(BaseParcel):
     def compartment_location(self, location_data: dict):
         """Set compartment location for :class:`SentParcel`
         :param location_data: :class:`dict` containing `compartment properties` data for :class:`Parcel`
-        :type location_data: dict"""
+        :type location_data: dict
+        """
+
         self._log.debug(f"setting compartment location with {location_data}")
         if self._compartment_properties is None:
             self._log.warning("tried to assign location to empty _compartment_properties")
@@ -424,9 +500,14 @@ class SentParcel(BaseParcel):
     def compartment_status(self) -> CompartmentActualStatus | None:
         """Returns a compartment status for :class:`SentParcel`
 
-        :return: Compartment status for :class:`Parcel`
-        :rtype: CompartmentActualStatus"""
+        :return: Compartment status for :class:`SentParcel`
+        :rtype: CompartmentActualStatus
+        """
+
         self._log.debug("getting compartment status")
+        if self._compartment_properties is None:
+            self._log.warning("tried to access empty _compartment_properties")
+            return None
 
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment status")
@@ -436,8 +517,16 @@ class SentParcel(BaseParcel):
         return None
 
     @compartment_status.setter
-    def compartment_status(self, status):
-        # TODO: Create documentation
+    def compartment_status(self, status: str | CompartmentActualStatus):
+        """Set compartment location for :class:`SentParcel`
+
+        :param status: compartment properties status for :class:`SentParcel`
+        :type status: str | CompartmentActualStatus
+        """
+        if self._compartment_properties is None:
+            self._log.warning("tried to assign status to empty _compartment_properties")
+            return
+
         self._log.debug(f"setting compartment status with {status}")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment status set")
@@ -450,7 +539,9 @@ class SentParcel(BaseParcel):
         """Returns a mocked location for :class:`SentParcel`
 
         :return: dict containing mocked location for :class:`SentParcel`
-        :rtype: dict"""
+        :rtype: dict
+        """
+
         self._log.debug("getting mocked location")
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got mocked location")
@@ -465,12 +556,13 @@ class SentParcel(BaseParcel):
 
 
 class Receiver:
-    """Object representation of :class:`Parcel` receiver
+    """Object representation of :class:`BaseParcel` receiver
 
-    :param receiver_data: :class:`dict` containing sender data for :class:`Parcel`
+    :param receiver_data: :class:`dict` containing sender data for :class:`BaseParcel` and it's subclasses
     :type receiver_data: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, receiver_data: dict, logger: logging.Logger):
         """Constructor method
@@ -478,7 +570,9 @@ class Receiver:
         :param receiver_data: dict containing receiver data
         :type receiver_data: dict
         :param logger: logger instance
-        :type logger: logging.Logger"""
+        :type logger: logging.Logger
+        """
+
         self.email: str = receiver_data["email"]
         self.phone_number: str = receiver_data["phoneNumber"]
         self.name: str = receiver_data["name"]
@@ -492,12 +586,13 @@ class Receiver:
 
 
 class Sender:
-    """Object representation of :class:`Parcel` sender
+    """Object representation of :class:`BaseParcel` sender and it's subclasses
 
-    :param sender_data: :class:`dict` containing sender data for :class:`Parcel`
+    :param sender_data: :class:`dict` containing sender data for :class:`BaseParcel` and it's subclasses
     :type sender_data: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, sender_data: dict, logger: logging.Logger):
         """Constructor method
@@ -505,7 +600,9 @@ class Sender:
         :param sender_data: dict containing sender data
         :type sender_data: dict
         :param logger: logger instance
-        :type logger: logging.Logger"""
+        :type logger: logging.Logger
+        """
+
         self.sender_name: str = sender_data.get("name", None)
         self.sender_email: str = sender_data.get("email", None)
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
@@ -521,21 +618,23 @@ class Sender:
 
 
 class Point:
-    """Object representation of :class:`Parcel` point
+    """Object representation of :class:`BaseParcel` point and it's subclasses
 
-    :param point_data: :class:`dict` containing point data for :class:`Parcel`
+    :param point_data: :class:`dict` containing point data for :class:`BaseParcel` and it's subclasses
     :type point_data: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, point_data: dict, logger: logging.Logger):
         """Constructor method
 
-        :param point_data: :class:`dict` containing point data for :class:`Parcel`
+        :param point_data: :class:`dict` containing point data for :class:`BaseParcel` and it's subclasses
         :type point_data: dict
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self.name: str = point_data["name"]
         self.latitude: float = point_data["location"]["latitude"]
@@ -579,47 +678,76 @@ class Point:
 
     @property
     def location(self) -> Tuple[float, float]:
-        """Returns a mocked location for :class:`PickupPoint`
+        """Returns a mocked location for :class:`Point`
 
-        :return: tuple containing location for :class:`PickupPoint`
-        :rtype: tuple"""
+        :return: tuple containing location for :class:`Point`
+        :rtype: tuple
+        """
+
         self._log.debug("getting location")
         return self.latitude, self.longitude
 
 
 class PickupPoint(Point):
-    """Object representation of :class:`Parcel` pick up point
+    """Object representation of :class:`BaseParcel` and it's subclasses pick up point
 
-    :param point_data: :class:`dict` containing pickup point data for :class:`Parcel`
+    :param point_data: :class:`dict` containing pickup point data for :class:`BaseParcel` and it's subclasses
     :type point_data: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, point_data: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param point_data: :class:`dict` containing pickup point data for :class:`BaseParcel` and it's subclasses
+        :type point_data: dict
+        :param logger: :class:`logging.Logger` parent instance
+        :type logger: logging.Logger
+        """
         super().__init__(point_data, logger)
 
 
 class DropOffPoint(Point):
-    """Object representation of :class:`Parcel` drop off point
+    """Object representation of :class:`BaseParcel` and it's subclasses drop off point
 
-    :param point_data: :class:`dict` containing pickup point data for :class:`Parcel`
+    :param point_data: :class:`dict` containing pickup point data for :class:`BaseParcel` and it's subclasses
     :type point_data: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, point_data: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param point_data: :class:`dict` containing pickup point data for :class:`BaseParcel` and it's subclasses
+        :type point_data: dict
+        :param logger: :class:`logging.Logger` parent instance
+        :type logger: logging.Logger
+        """
+
         super().__init__(point_data, logger)
 
 
 class DeliveryPoint:
-    """Object representation of :class: DeliveryPoint
+    """Object representation of :class:`BaseParcel` and it's subclasses delivery point
 
-    :param delivery_point: :class:`dict` containing delivery point data for :class:`DeliveryPoint`
+    :param delivery_point: :class:`dict` containing delivery point data for :class:`BaseParcel` and it's subclasses delivery point
     :type delivery_point: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, delivery_point: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param delivery_point: :class:`dict` containing delivery point data for :class:`BaseParcel`
+        and it's subclasses delivery point
+        :type delivery_point: dict
+        :param logger: :class:`logging.Logger` parent instance
+        :type logger: logging.Logger
+        """
+
         self.name = delivery_point.get("name")
         self.company_name = delivery_point.get("companyName")
         self.post_code = delivery_point["address"]["postCode"] if "address" in delivery_point else None
@@ -637,13 +765,23 @@ class DeliveryPoint:
 
 
 class Payment:
-    """Object representation of :class: Payment
-    :param payment_details: :class:`dict` containing payment data for :class:`Payment`
+    """Object representation of :class:`BaseParcel` and it's subclasses payment
+
+    :param payment_details: :class:`dict` containing payment data for :class:`BaseParcel` and it's subclasses payment
     :type payment_details: dict
     :param logger: :class:`logging.Logger` parent instance
-    :type logger: logging.Logger"""
+    :type logger: logging.Logger
+    """
 
     def __init__(self, payment_details: dict, logger: logging.Logger):
+        """Constructor method
+
+        :param payment_details: :class:`dict` containing payment data for :class:`BaseParcel` and it's subclasses payment
+        :type payment_details: dict
+        :param logger: :class:`logging.Logger` parent instance
+        :type logger: logging.Logger
+        """
+
         self.paid = payment_details.get("paid")
         self.total_price = payment_details.get("totalPrice")
         self.insurance_price = payment_details.get("insurancePrice")
@@ -675,6 +813,7 @@ class MultiCompartment:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self.uuid = multicompartment_data["uuid"]
         self.shipment_numbers: List[str] | None = (
             multicompartment_data["shipmentNumbers"] if "shipmentNumbers" in multicompartment_data else None
@@ -707,6 +846,7 @@ class Operations:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self.manual_archive: bool = operations_data["manualArchive"]
         self.auto_archivable_since: arrow | None = (
             get(operations_data["autoArchivableSince"]) if "autoArchivableSince" in operations_data else None
@@ -750,6 +890,7 @@ class EventLog:
         :type logger: logging.Logger
         :raises UnknownStatusError: Unknown status in EventLog
         """
+
         self.type: str = eventlog_data["type"]
         self.date: arrow = get(eventlog_data["date"])
         self.details: dict | None = eventlog_data.get("details")
@@ -792,6 +933,7 @@ class SharedTo:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self.uuid: str = sharedto_data["uuid"]
         self.name: str = sharedto_data["name"]
         self.phone_number = sharedto_data["phoneNumber"]
@@ -821,6 +963,7 @@ class QRCode:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self._qr_code = qrcode_data
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
@@ -836,6 +979,7 @@ class QRCode:
 
         :return: QR Code image
         :rtype: BytesIO"""
+
         self._log.debug("generating qr image")
         qr = qrcode.QRCode(
             version=3, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=20, border=4, mask_pattern=5
@@ -869,6 +1013,7 @@ class CompartmentLocation:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self.name: str = compartmentlocation_data["compartment"]["name"]
         self.side: str = compartmentlocation_data["compartment"]["location"]["side"]
         self.column: str = compartmentlocation_data["compartment"]["location"]["column"]
@@ -901,6 +1046,7 @@ class CompartmentProperties:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self._session_uuid: str = compartmentproperties_data["sessionUuid"]
         self._session_expiration_time: int = compartmentproperties_data["sessionExpirationTime"]
         self._location: CompartmentLocation | None = None
@@ -919,6 +1065,7 @@ class CompartmentProperties:
 
         :return: string containing session unique identified for :class:`CompartmentProperties`
         :rtype: str"""
+
         self._log.debug("getting session uuid")
         return self._session_uuid
 
@@ -927,7 +1074,9 @@ class CompartmentProperties:
         """Returns a compartment location for :class:`CompartmentProperties`
 
         :return: compartment location for :class:`CompartmentProperties`
-        :rtype: str"""
+        :rtype: str
+        """
+
         self._log.debug("getting location")
         return self._location
 
@@ -936,7 +1085,9 @@ class CompartmentProperties:
         """Set a compartment location for :class:`CompartmentProperties`
 
         :param location_data: dict containing compartment location data for :class:`CompartmentProperties`
-        :type location_data: dict"""
+        :type location_data: dict
+        """
+
         self._log.debug("setting location")
         self._location = CompartmentLocation(location_data, self._log)
 
@@ -945,7 +1096,9 @@ class CompartmentProperties:
         """Returns a compartment status for :class:`CompartmentProperties`
 
         :return: compartment location for :class:`CompartmentProperties`
-        :rtype: CompartmentActualStatus"""
+        :rtype: CompartmentActualStatus
+        """
+
         self._log.debug("getting status")
         return self._status
 
@@ -977,6 +1130,7 @@ class AirSensorData:
         :param logger: :class:`logging.Logger` parent instance
         :type logger: logging.Logger
         """
+
         self.updated_until: arrow = airsensor_data["updatedUntil"]
         self.air_quality: str = airsensor_data["airQuality"]
         self.temperature: float = airsensor_data["temperature"]
