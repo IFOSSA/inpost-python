@@ -1,10 +1,6 @@
 name: Create issues from todos
 
-on:
-  push:
-    branches:
-      - dev
-      - dev-tests
+on: ["push"]
 
 jobs:
     build:
