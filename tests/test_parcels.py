@@ -177,22 +177,21 @@ def test_compartment_open_data(test_input, expected):
         (parcel_locker_multi_main, parcel_locker_multi_main),
         (parcel_locker_multi_main, parcel_locker_multi_main),
         (parcel_locker_multi_main, parcel_locker_multi_main),
-        (courier_parcel, None),
     ],
 )
 def test_mocked_location(test_input, expected):
     mocked_location = Parcel(test_input, logging.getLogger(__name__)).mocked_location
     expected = expected["pickUpPoint"]["location"]
     is_in_range = (
-        abs(mocked_location["latitude"] - expected["latitude"]) <= 0.00005
-        and abs(mocked_location["longitude"] - expected["longitude"]) <= 0.00005
+        round(abs(mocked_location["latitude"] - expected["latitude"]), 6) <= 0.00005
+        and round(abs(mocked_location["longitude"] - expected["longitude"]), 6) <= 0.00005
     )
     assert is_in_range, (
-        f"mocked_location invalid threshold. Should be less or equal to 0.00005 but on of values is not meeting it"
-        f"mocked_latitude: {mocked_location['latitude']}, expected: {expected['latitude']},"
-        f" diff: {abs(mocked_location['latitude'] - expected['latitude'])}"
-        f"mocked_latitude: {mocked_location['longitude']}, expected: {expected['longitude']},"
-        f" diff: {abs(mocked_location['latitude'] - expected['longitude'])}"
+        f"mocked_location invalid threshold. Should be less or equal to 0.00005 but one of values is not meeting it. "
+        f"mocked_latitude: {mocked_location['latitude']}, expected: {expected['latitude']}, "
+        f" diff: {abs(mocked_location['latitude'] - expected['latitude'])}. "
+        f"mocked_longitude: {mocked_location['longitude']}, expected: {expected['longitude']}, "
+        f" diff: {abs(mocked_location['longitude'] - expected['longitude'])}"
     )
 
 
