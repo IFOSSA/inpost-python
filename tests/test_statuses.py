@@ -3,12 +3,6 @@ from inpost.static.statuses import ParcelCarrierSize, ParcelLockerSize, ParcelDe
     ParcelAdditionalInsurance, ParcelType, PointType, ParcelPointOperations, ParcelStatus, DeliveryType, ReturnsStatus, \
     ParcelOwnership, CompartmentExpectedStatus, CompartmentActualStatus, PaymentType, PaymentStatus, ParcelServiceName
 
-from tests.data import courier1, parcel1
-
-
-# https://docs.pytest.org/en/7.3.x/getting-started.html#create-your-first-test
-
-# https://www.jetbrains.com/help/pycharm/pytest.html#pytest-parametrize
 
 @pytest.mark.parametrize("test_input,expected",
                          [(None, None),
