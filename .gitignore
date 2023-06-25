@@ -12,3 +12,5 @@
 /tests/data.json
 /tests/data.py
 /tests/data_responses.py
+/inpost/static/__pycache__/
+/inpost/__pycache__/
