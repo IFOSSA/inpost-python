@@ -5,10 +5,3 @@
 /.mypy_cache/
 /dist/
 /venv/
-/.idea/vcs.xml
-/.idea/jsonSchemas.xml
-/.idea/inpost-python.iml
-/.idea/modules.xml
-/.idea/inspectionProfiles/profiles_settings.xml
-/.idea/.gitignore
-/.idea/misc.xml
