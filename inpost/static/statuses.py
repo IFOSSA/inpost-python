@@ -240,7 +240,7 @@ class PaymentStatus(ParcelBase):
 class ParcelServiceName(ParcelBase):
     UNKNOWN = "UNKNOWN DATA"
     ALLEGRO_PARCEL = 1
-    ALLEGRO_PARCEL_SMART = 21
+    ALLEGRO_PARCEL_SMART = 2
     ALLEGRO_LETTER = 3
     ALLEGRO_COURIER = 4
     STANDARD = 5
