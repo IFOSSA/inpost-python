@@ -67,7 +67,9 @@ class Inpost:
 
         :param phone_number: phone number
         :type phone_number: str
-        :raises PhoneNumberError: Wrong phone number format or is not digit"""
+        :raises PhoneNumberError: Wrong phone number format or is not digit
+        """
+
         if isinstance(phone_number, int):
             phone_number = str(phone_number)
 
@@ -129,7 +131,8 @@ class Inpost:
         :raises UnauthorizedError: User not authenticated in inpost service
         :raises NotFoundError: URL not found
         :raises UnidentifiedAPIError: Unexpected things happened
-        :raises ValueError: Doubled authorization header in request"""
+        :raises ValueError: Doubled authorization header in request
+        """
 
         if auth and headers:
             if "Authorization" in headers:
@@ -170,7 +173,9 @@ class Inpost:
         :param data: User's Inpost data (e.g. phone_number, sms_code, auth_token, refr_token)
         :type data: dict
         :return: Inpost object from provided dict
-        :rtype: Inpost"""
+        :rtype: Inpost
+        """
+
         inp = cls(phone_number=data["phone_number"])
         inp.sms_code = data["sms_code"]
         inp.auth_token = data["auth_token"]
@@ -186,6 +191,7 @@ class Inpost:
         :rtype: bool
         :raises PhoneNumberError: Missing phone number
         """
+
         if not self.phone_number:  # can't log it cuz if there's no phone number no logger initialized @shrug
             raise PhoneNumberError("Phone number missing")
 
@@ -256,6 +262,7 @@ class Inpost:
         :raises NotFoundError: Phone number not found
         :raises UnidentifiedAPIError: Unexpected thing happened
         """
+
         self._log.info("refreshing token")
 
         if not self.refr_token:
@@ -292,7 +299,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info("logging out")
 
         if not self.auth_token:
@@ -317,7 +326,9 @@ class Inpost:
         """Simplified method to logout and close user's session
 
         :return: True if user is logged out and session is closed else False
-        :raises NotAuthenticatedError: User not authenticated in inpost service"""
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        """
+
         self._log.info("disconnecting")
         if not self.auth_token:
             self._log.error("authorization token missing")
@@ -350,6 +361,7 @@ class Inpost:
         :raises UnidentifiedAPIError: Unexpected thing happened
         :raises ParcelTypeError: Unknown parcel type selected
         """
+
         self._log.info(f"getting parcel with shipment number: {shipment_number}")
 
         if not self.auth_token:
@@ -421,7 +433,9 @@ class Inpost:
         :raises ParcelTypeError: Unknown parcel type selected
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info("getting parcels")
 
         if not self.auth_token:
@@ -477,7 +491,18 @@ class Inpost:
             return list(_parcels) if not parse else [Parcel(parcel_data=data, logger=self._log) for data in _parcels]
 
     async def get_multi_compartment(self, multi_uuid: str | int, parse: bool = False) -> dict | List[Parcel]:
-        # TODO: Create documentation
+        """Fetches all available parcels for set `Inpost.phone_number` and optionally filters them
+
+        :param multi_uuid: multicompartment uuid
+        :type multi_uuid: str | int
+        :param parse: switch for parsing response
+        :type parse: bool
+        :return: multicompartment parcels
+        :rtype: dict | List[Parcel]
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -523,7 +548,8 @@ class Inpost:
         :raises NotFoundError: Phone number not found
         :raises UnidentifiedAPIError: Unexpected thing happened
 
-        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!"""
+        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!
+        """
 
         parcel_obj_: Parcel | None = None
         if shipment_number is None is parcel_obj:
@@ -573,7 +599,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info(f"opening compartment for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -610,7 +638,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info(f"checking compartment status for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -647,7 +677,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info(f"terminating collect session for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -689,7 +721,8 @@ class Inpost:
         :raises NotFoundError: Phone number not found
         :raises UnidentifiedAPIError: Unexpected thing happened
 
-        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!"""
+        .. warning:: you must fill in only one parameter - shipment_number or parcel_obj!
+        """
 
         if shipment_number and parcel_obj:
             self._log.error("shipment_number and parcel_obj filled in")
@@ -721,7 +754,9 @@ class Inpost:
         :param parcel_obj: Parcel object
         :type parcel_obj: Parcel
         :return: True if compartment status is closed and successfully terminates user's session else False
-        :rtype: bool"""
+        :rtype: bool
+        """
+
         self._log.info(f"closing compartment for {parcel_obj.shipment_number}")
 
         if await self.check_compartment_status(expected_status=CompartmentExpectedStatus.CLOSED, parcel_obj=parcel_obj):
@@ -740,7 +775,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info(f"reopening compartment for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -793,6 +830,7 @@ class Inpost:
         :raises MissingParamsError: none of required query and location params are filled
         :raises UnidentifiedAPIError: Unexpected thing happened
         """
+
         self._log.info("getting parcel prices")
 
         if not self.auth_token:
@@ -833,7 +871,14 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def blik_status(self) -> bool:
-        # TODO: Create documentation
+        """Checks if user has active blik session
+
+
+        :return: True if user has no active blik sessions else False
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        """
+
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -863,8 +908,27 @@ class Inpost:
         sender: Sender,
         receiver: Receiver,
         delivery_point: Point,
-    ) -> None | dict:
-        # TODO: Create documentation
+    ) -> dict | None:
+        """Fetches parcel points for inpost services
+
+        :param delivery_type: a way parcel will be delivered
+        :type delivery_type: DeliveryType
+        :param parcel_size: size of parcel
+        :type parcel_size: ParcelLockerSize | ParcelCarrierSize
+        :param price: price for chosen parcel size
+        :type price: float | str
+        :param sender: parcel sender
+        :type sender: Sender
+        :param receiver: parcel receiver
+        :type receiver: Receiver
+        :param delivery_point: parcel delivery point
+        :type delivery_point: Point
+        :return: :class:`dict` with response
+        :rtype: dict | None
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        """
+
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -896,7 +960,20 @@ class Inpost:
     async def create_blik_session(
         self, amount: float | str, shipment_number: str, currency: str = "PLN"
     ) -> None | dict:
-        # TODO: Create documentation
+        """Creates blik session for sending parcel
+
+        :param amount: amount of money that has to be paid
+        :type amount: float | str
+        :param shipment_number: shipment number of parcel that is being sent
+        :type shipment_number: str
+        :param currency: currency of `amount`
+        :type currency: str
+        :return: True if user has no active blik sessions else False
+        :rtype: bool
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -927,12 +1004,31 @@ class Inpost:
 
     async def validate_send(
         self,
+        drop_off_point: str,
         shipment_number: str | None = None,
         parcel_obj: SentParcel | None = None,
         location: dict | None = None,
-        drop_off_point: str | None = None,
     ) -> SentParcel:
-        # TODO: Create documentation
+        """Validates sending parcel
+
+        :param drop_off_point: parcel machine codename where you want to drop-opp parcel
+        :type drop_off_point: str
+        :param shipment_number: sent parcel shipment number
+        :type shipment_number: str | None
+        :param parcel_obj: sent parcel object
+        :type parcel_obj: SentParcel | None
+        :param location: ...
+        :type location: dict | None
+        :return: Sent parcel with filled compartment properties
+        :rtype: SentParcel
+        :raises SingleParamError: Fields shipment_number and parcel_obj filled in but only one of them is required
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises NoParcelError: Could not get parcel object from provided data
+        :raises MissingParamsError: None of required shipment number and parcel object params are filled
+        :raises ValueError: Missing drop-off point
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         if not self.auth_token:
             self._log.error("authorization token missing")
             raise NotAuthenticatedError(reason="Not logged in")
@@ -993,6 +1089,7 @@ class Inpost:
         :rtype: bool
         :raises NotAuthenticatedError: User not logged in (missing auth_token)
         """
+
         self._log.info(f"opening compartment for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -1024,6 +1121,7 @@ class Inpost:
         :rtype: bool
         :raises NotAuthenticatedError: User not logged in (missing auth_token)
         """
+
         self._log.info(f"reopening send compartment for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -1060,7 +1158,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info(f"checking compartment status for {parcel_obj.shipment_number}")
 
         if not self.auth_token:
@@ -1095,7 +1195,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info("getting parcel prices")
 
         if not self.auth_token:
@@ -1127,7 +1229,9 @@ class Inpost:
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
-        :raises UnidentifiedAPIError: Unexpected thing happened"""
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info("getting friends")
 
         if not self.auth_token:
@@ -1149,7 +1253,18 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def get_parcel_friends(self, shipment_number: int | str, parse=False) -> dict:
-        # TODO: Create documentation
+        """Fetches parcel friends
+
+        :param shipment_number: shipment number of parcel that friends are fetched
+        :type shipment_number: int | str
+        :param parse: switch for parsing response
+        :type parse: bool
+        :return: dict containing friends data
+        :rtype: dict
+        :raises NotAuthenticatedError: User not authenticated in inpost service
+        :raises UnidentifiedAPIError: Unexpected thing happened
+        """
+
         self._log.info("getting parcel friends")
 
         if not self.auth_token:
@@ -1201,7 +1316,8 @@ class Inpost:
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: User with specified phone number not found
         :raises UnidentifiedAPIError: Unexpected thing happened
-        :raises ValueError: Name length exceeds 20 characters"""
+        :raises ValueError: Name length exceeds 20 characters
+        """
 
         self._log.info("adding user friend")
 
@@ -1278,7 +1394,8 @@ class Inpost:
         :raises NotFoundError: Friend not found
         :raises UnidentifiedAPIError: Unexpected thing happened
         :raises ValueError: Name length exceeds 20 characters
-        :raises MissingParamsError: none of required uuid, name or phone_number params are filled"""
+        :raises MissingParamsError: none of required uuid, name or phone_number params are filled
+        """
 
         self._log.info("removing user friend")
 
@@ -1333,7 +1450,8 @@ class Inpost:
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Friend not found
         :raises UnidentifiedAPIError: Unexpected thing happened
-        :raises ValueError: Name length exceeds 20 characters"""
+        :raises ValueError: Name length exceeds 20 characters
+        """
 
         self._log.info("updating user friend")
 
