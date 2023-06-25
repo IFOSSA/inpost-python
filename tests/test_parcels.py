@@ -12,6 +12,8 @@ from tests.test_data import (
     parcel_locker_multi_main,
     parcel_properties,
     qr_result,
+    qr_result_multi,
+    qr_result_multi_main,
 )
 
 
@@ -40,11 +42,13 @@ def test_open_code(test_input, expected):
     "test_input,expected",
     [
         (parcel_locker, qr_result),
+        (parcel_locker_multi, qr_result_multi),
+        (parcel_locker_multi_main, qr_result_multi_main),
     ],
 )
 def test_generate_qr_image(test_input, expected):
     qr_image = Parcel(test_input, logging.getLogger(__name__)).generate_qr_image
-    assert qr_image == expected, f"qr_image: {qr_image} != expected: {expected}"
+    assert qr_image.read() == expected, f"qr_image: {qr_image} != expected: {expected}"
 
 
 @pytest.mark.parametrize(
