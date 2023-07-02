@@ -143,7 +143,7 @@ class Parcel(BaseParcel):
             self._log.debug("got open code")
             return self._open_code
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @property
@@ -159,7 +159,7 @@ class Parcel(BaseParcel):
             self._log.debug("got qr image")
             return self._qr_code.qr_image
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @property
@@ -175,7 +175,7 @@ class Parcel(BaseParcel):
             self._log.debug("got compartment properties")
             return self._compartment_properties
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @compartment_properties.setter
@@ -192,8 +192,9 @@ class Parcel(BaseParcel):
             self._compartment_properties = CompartmentProperties(
                 compartmentproperties_data=compartmentproperties_data, logger=self._log
             )
+            return
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
     def compartment_location(self):
@@ -208,7 +209,7 @@ class Parcel(BaseParcel):
             self._log.debug("got compartment location")
             return self._compartment_properties.location if self._compartment_properties else None
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
         return None
 
     @compartment_location.setter
@@ -223,8 +224,9 @@ class Parcel(BaseParcel):
         if self.shipment_type == ParcelShipmentType.parcel and self._compartment_properties is not None:
             self._log.debug("compartment location set")
             self._compartment_properties.location = location_data
+            return
 
-        self._log.debug(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
+        self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
     def compartment_status(self) -> CompartmentActualStatus | None:
@@ -259,6 +261,7 @@ class Parcel(BaseParcel):
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment status set")
             self._compartment_properties.status = status
+            return
 
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
@@ -459,6 +462,7 @@ class SentParcel(BaseParcel):
             self._compartment_properties = CompartmentProperties(
                 compartmentproperties_data=compartmentproperties_data, logger=self._log
             )
+            return
 
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
@@ -493,6 +497,7 @@ class SentParcel(BaseParcel):
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment location set")
             self._compartment_properties.location = location_data
+            return
 
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
@@ -531,6 +536,7 @@ class SentParcel(BaseParcel):
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("compartment status set")
             self._compartment_properties.status = status
+            return
 
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
