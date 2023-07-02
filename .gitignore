@@ -5,3 +5,12 @@
 /.mypy_cache/
 /dist/
 /venv/
+/.idea/
+/tests/.pytest_cache
+/tests/__pycache__/
+/tests/api_tests.py
+/tests/data.json
+/tests/data.py
+/tests/data_responses.py
+/inpost/static/__pycache__/
+/inpost/__pycache__/
