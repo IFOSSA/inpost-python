@@ -589,13 +589,13 @@ class Inpost:
 
         raise UnidentifiedAPIError(reason=resp)
 
-    async def open_compartment(self, parcel_obj: Parcel) -> bool:
+    async def open_compartment(self, parcel_obj: Parcel) -> Parcel:
         """Opens compartment for `Inpost.parcel` object
 
         :param parcel_obj: Parcel object
         :type parcel_obj: Parcel
-        :return: True if compartment gets opened
-        :rtype: bool
+        :return: Parcel with compartment location set if it gets opened
+        :rtype: Parcel
         :raises NotAuthenticatedError: User not authenticated in inpost service
         :raises UnauthorizedError: Unauthorized access to inpost services,
         :raises NotFoundError: Phone number not found
@@ -620,7 +620,8 @@ class Inpost:
 
         if resp.status == 200:
             self._log.debug(f"opened compartment for {parcel_obj.shipment_number}")
-            return True
+            parcel_obj.compartment_location = await resp.json()
+            return parcel_obj
 
         raise UnidentifiedAPIError(reason=resp)
 
@@ -741,9 +742,9 @@ class Inpost:
         self._log.info(f"collecting parcel with shipment number {parcel_obj.shipment_number}")
 
         if parcel_obj_ := await self.collect_compartment_properties(parcel_obj=parcel_obj, location=location):
-            if await self.open_compartment(parcel_obj=parcel_obj_):
-                if await self.check_compartment_status(parcel_obj=parcel_obj_):
-                    return parcel_obj_
+            if parcel_obj__ := await self.open_compartment(parcel_obj=parcel_obj_):
+                if await self.check_compartment_status(parcel_obj=parcel_obj__):
+                    return parcel_obj__
 
         return None
 
