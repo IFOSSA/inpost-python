@@ -36,6 +36,7 @@ from inpost.static import (
     blik_status_url,
     collect_url,
     compartment_open_url,
+    compartment_reopen_url,
     compartment_status_url,
     confirm_sms_code_url,
     create_blik_url,
@@ -788,7 +789,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"reopen compartment for {parcel_obj.shipment_number}",
-            url=compartment_open_url,
+            url=compartment_reopen_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -796,7 +797,7 @@ class Inpost:
         )
 
         if resp.status == 200:
-            self._log.debug(f"opened compartment for {parcel_obj.shipment_number}")
+            self._log.debug(f"reopened compartment for {parcel_obj.shipment_number}")
             return True
 
         raise UnidentifiedAPIError(reason=resp)
@@ -1132,7 +1133,7 @@ class Inpost:
         resp = await self.request(
             method="post",
             action=f"reopen compartment for {parcel_obj.shipment_number}",
-            url=compartment_open_url,
+            url=compartment_reopen_url,
             auth=True,
             headers=None,
             data={"sessionUuid": parcel_obj.compartment_properties.session_uuid},
@@ -1140,7 +1141,7 @@ class Inpost:
         )
 
         if resp.status == 200:
-            self._log.debug(f"opened send compartment for {parcel_obj.shipment_number}")
+            self._log.debug(f"reopened send compartment for {parcel_obj.shipment_number}")
             return True
 
         return False
