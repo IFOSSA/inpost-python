@@ -2,17 +2,17 @@ from enum import Enum, EnumMeta
 
 
 class Meta(EnumMeta):  # temporary handler for unexpected keys in enums
-    def __getitem__(self, item):
+    def __getitem__(cls, item):
         try:
             return super().__getitem__(item) if item is not None else None
         except KeyError:
-            return self.UNKNOWN
+            return cls.UNKNOWN
 
-    def __getattribute__(self, item):
+    def __getattribute__(cls, item):
         try:
             return super().__getattribute__(item) if item is not None else None
         except KeyError:
-            return self.UNKNOWN
+            return cls.UNKNOWN
 
     # def get_all(cls):
     #     return [getattr(cls, name) for name in cls.__members__]
