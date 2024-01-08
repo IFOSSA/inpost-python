@@ -5,6 +5,7 @@ description = "Asynchronous InPost package allowing you to manage existing incom
 authors = ["loboda4450 <loboda4450@gmail.com>", "MrKazik99 <mrkazik99@gmail.com>"]
 maintainers = ["loboda4450 <loboda4450@gmail.com>"]
 documentation = 'https://inpost-python.readthedocs.io/en/latest/index.html'
+license = 'LGPL-2.1-only'
 repository = "https://github.com/IFOSSA/inpost-python"
 readme = "README.md"
 packages = [
