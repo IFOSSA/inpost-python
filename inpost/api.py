@@ -64,27 +64,37 @@ from inpost.static.headers import useragent
 class Inpost:
     """Python representation of an Inpost app. Essentially implements methods to manage all incoming parcels"""
 
-    def __init__(self,
-                 prefix: str,
-                 phone_number: str,
-                 sms_code=None,
-                 auth_token=None,
-                 refr_token=None,
-                 ):
+    def __init__(
+        self,
+        prefix: str,
+        phone_number: str,
+        sms_code=None,
+        auth_token=None,
+        refr_token=None,
+    ):
         """Constructor method
-
+        :param prefix: country code
+        :type prefix: str
         :param phone_number: phone number
         :type phone_number: str
+        :param sms_code: sms code from inpost
+        :type sms_code: str | None
+        :param auth_token: authorization token from inpost
+        :type auth_token: str
+        :param refr_token: refresh token from inpost
+        :type refr_token: str
         :raises PhoneNumberError: Wrong phone number format or is not digit
         """
 
         if isinstance(phone_number, int):
             phone_number = str(phone_number)
 
-        if (not (len(phone_number) == 9 and phone_number.isdigit())
-                or not (prefix.startswith('+') and prefix[1:].isdigit() and 2 <= len(prefix) <= 3)):
-            raise PhoneNumberError(f"Wrong phone number format: {phone_number} "
-                                   f"(should be +xxx123123123 or +xx123123123)")
+        if not (len(phone_number) == 9 and phone_number.isdigit()) or not (
+            prefix.startswith("+") and prefix[1:].isdigit() and 2 <= len(prefix) <= 3
+        ):
+            raise PhoneNumberError(
+                f"Wrong phone number format: {phone_number} " f"(should be +xxx123123123 or +xx123123123)"
+            )
         self.prefix: str = prefix
         self.phone_number: str = phone_number[-9:]
         self.sms_code: str | None = sms_code
@@ -102,12 +112,7 @@ class Inpost:
 
     @property
     def login_auth_data(self) -> dict:
-        return {
-            "phoneNumber": {
-                "prefix": self.prefix,
-                "value": self.phone_number
-            }
-        }
+        return {"phoneNumber": {"prefix": self.prefix, "value": self.phone_number}}
 
     def __repr__(self):
         return f"{self.__class__.__name__}(phone_number={self.phone_number})"
@@ -119,16 +124,16 @@ class Inpost:
         return self.disconnect()
 
     async def request(
-            self,
-            method: str,
-            action: str,
-            url: StrOrURL,
-            auth: bool = True,
-            headers: dict | None = None,
-            params: dict | None = None,
-            data: dict | None = None,
-            autorefresh: bool = True,
-            **kwargs,
+        self,
+        method: str,
+        action: str,
+        url: StrOrURL,
+        auth: bool = True,
+        headers: dict | None = None,
+        params: dict | None = None,
+        data: dict | None = None,
+        autorefresh: bool = True,
+        **kwargs,
     ) -> ClientResponse:
         """Validates sent data and fetches required compartment properties for opening
 
@@ -349,7 +354,7 @@ class Inpost:
         return False
 
     async def get_parcel(
-            self, shipment_number: int | str, parcel_type: ParcelType = ParcelType.TRACKED, parse=False
+        self, shipment_number: int | str, parcel_type: ParcelType = ParcelType.TRACKED, parse=False
     ) -> dict | Parcel | SentParcel | ReturnParcel:
         """Fetches single parcel from provided shipment number
 
@@ -414,12 +419,12 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def get_parcels(
-            self,
-            parcel_type: ParcelType = ParcelType.TRACKED,
-            status: ParcelStatus | List[ParcelStatus] | None = None,
-            pickup_point: str | List[str] | None = None,
-            shipment_type: ParcelShipmentType | List[ParcelShipmentType] | None = None,
-            parse: bool = False,
+        self,
+        parcel_type: ParcelType = ParcelType.TRACKED,
+        status: ParcelStatus | List[ParcelStatus] | None = None,
+        pickup_point: str | List[str] | None = None,
+        shipment_type: ParcelShipmentType | List[ParcelShipmentType] | None = None,
+        parse: bool = False,
     ) -> List[dict] | List[Parcel]:
         """Fetches all available parcels for set `Inpost.phone_number` and optionally filters them
 
@@ -463,7 +468,7 @@ class Inpost:
                 raise ParcelTypeError(reason=f"Unknown parcel type: {parcel_type}")
 
         async with await self.request(
-                method="get", action="get parcels", url=url, auth=True, headers=None, data=None, autorefresh=True
+            method="get", action="get parcels", url=url, auth=True, headers=None, data=None, autorefresh=True
         ) as resp:
             if resp.status != 200:
                 self._log.debug(f"Could not get parcels due to HTTP error {resp.status}")
@@ -534,8 +539,7 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def collect_compartment_properties(
-            self, shipment_number: str | int | None = None, parcel_obj: Parcel | None = None,
-            location: dict | None = None
+        self, shipment_number: str | int | None = None, parcel_obj: Parcel | None = None, location: dict | None = None
     ) -> Parcel:
         """Validates sent data and fetches required compartment properties for opening
 
@@ -575,22 +579,22 @@ class Inpost:
             raise NoParcelError(reason="Could not obtain desired parcel!")
 
         self._log.info(f"collecting compartment properties for {parcel_obj_.shipment_number}")
-
         resp = await self.request(
             method="post",
             action="collect compartment properties",
             url=collect_url,
             auth=True,
             headers=None,
-            data={
-                "parcel": parcel_obj_.compartment_open_data | {
-                    "receiverPhoneNumber": {
-                        "prefix": self.prefix,
-                        "value": self.phone_number
-                    },
-                },
-                "geoPoint": location if location is not None else parcel_obj_.mocked_location,
-            },
+            # fmt: off
+            data={"parcel": parcel_obj_.compartment_open_data | {"receiverPhoneNumber":
+                                                                     {
+                                                                         "prefix": self.prefix,
+                                                                         "value": self.phone_number
+                                                                      }
+                                                                 },
+                  "geoPoint": location if location is not None else parcel_obj_.mocked_location,
+                  },
+            # fmt: on
             autorefresh=True,
         )
 
@@ -638,7 +642,7 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def check_compartment_status(
-            self, parcel_obj: Parcel, expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED
+        self, parcel_obj: Parcel, expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED
     ) -> bool:
         """Checks and compare compartment status (e.g. opened, closed) with expected status
 
@@ -716,7 +720,7 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def collect(
-            self, shipment_number: str | None = None, parcel_obj: Parcel | None = None, location: dict | None = None
+        self, shipment_number: str | None = None, parcel_obj: Parcel | None = None, location: dict | None = None
     ) -> Parcel | None:
         """Simplified method to open compartment
 
@@ -815,13 +819,13 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def get_parcel_points(
-            self,
-            query: str | None = None,
-            latitude: float | None = None,
-            longitude: float | None = None,
-            per_page: int = 1000,
-            operation: ParcelPointOperations = ParcelPointOperations.CREATE,
-            parse: bool = True,
+        self,
+        query: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        per_page: int = 1000,
+        operation: ParcelPointOperations = ParcelPointOperations.CREATE,
+        parse: bool = True,
     ) -> dict | List[Point]:
         """Fetches parcel points for inpost services
 
@@ -915,13 +919,13 @@ class Inpost:
         return False
 
     async def create_parcel(
-            self,
-            delivery_type: DeliveryType,
-            parcel_size: ParcelLockerSize | ParcelCarrierSize,
-            price: float | str,
-            sender: Sender,
-            receiver: Receiver,
-            delivery_point: Point,
+        self,
+        delivery_type: DeliveryType,
+        parcel_size: ParcelLockerSize | ParcelCarrierSize,
+        price: float | str,
+        sender: Sender,
+        receiver: Receiver,
+        delivery_point: Point,
     ) -> dict | None:
         """Fetches parcel points for inpost services
 
@@ -972,7 +976,7 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def create_blik_session(
-            self, amount: float | str, shipment_number: str, currency: str = "PLN"
+        self, amount: float | str, shipment_number: str, currency: str = "PLN"
     ) -> None | dict:
         """Creates blik session for sending parcel
 
@@ -1017,11 +1021,11 @@ class Inpost:
         raise UnidentifiedAPIError(reason=resp)
 
     async def validate_send(
-            self,
-            drop_off_point: str,
-            shipment_number: str | None = None,
-            parcel_obj: SentParcel | None = None,
-            location: dict | None = None,
+        self,
+        drop_off_point: str,
+        shipment_number: str | None = None,
+        parcel_obj: SentParcel | None = None,
+        location: dict | None = None,
     ) -> SentParcel:
         """Validates sending parcel
 
@@ -1159,7 +1163,7 @@ class Inpost:
         return False
 
     async def check_send_compartment_status(
-            self, parcel_obj: SentParcel, expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED
+        self, parcel_obj: SentParcel, expected_status: CompartmentExpectedStatus = CompartmentExpectedStatus.OPENED
     ) -> bool:
         """Checks and compare compartment status (e.g. opened, closed) with expected status
 
@@ -1528,14 +1532,7 @@ class Inpost:
             auth=True,
             headers=None,
             data={
-                "parcels": [
-                    {
-                        "shipmentNumber": shipment_number,
-                        "friendUuids": [
-                            uuid
-                        ]
-                    }
-                ],
+                "parcels": [{"shipmentNumber": shipment_number, "friendUuids": [uuid]}],
             },
             autorefresh=True,
         )
