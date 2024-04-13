@@ -282,7 +282,6 @@ class Parcel(BaseParcel):
             return {
                 "shipmentNumber": self.shipment_number,
                 "openCode": self._open_code,
-                "receiverPhoneNumber": self.receiver.phone_number,
             }
 
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")

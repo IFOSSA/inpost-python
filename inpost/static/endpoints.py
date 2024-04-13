@@ -1,19 +1,19 @@
 # AUTH #
 login_url: str = "https://api-inmobile-pl.easypack24.net/v1/authenticate"
-send_sms_code_url: str = "https://api-inmobile-pl.easypack24.net/v1/sendSMSCode/"  # get
-confirm_sms_code_url: str = "https://api-inmobile-pl.easypack24.net/v1/confirmSMSCode"  # post
+send_sms_code_url: str = "https://api-inmobile-pl.easypack24.net/v1/account"  # post
+confirm_sms_code_url: str = "https://api-inmobile-pl.easypack24.net/v1/account/verification"  # post
 logout_url: str = "https://api-inmobile-pl.easypack24.net/v1/logout"  # post
 refresh_token_url: str = "https://api-inmobile-pl.easypack24.net/v1/authenticate"  # post
 
 # INCOMING PARCELS #
-tracked_url: str = "https://api-inmobile-pl.easypack24.net/v3/parcels/tracked/"  # get
-multi_url: str = "https://api-inmobile-pl.easypack24.net/v3/parcels/multi/"  # get
-collect_url: str = "https://api-inmobile-pl.easypack24.net/v1/collect/validate"  # post
+tracked_url: str = "https://api-inmobile-pl.easypack24.net/v4/parcels/tracked"  # get
+multi_url: str = "https://api-inmobile-pl.easypack24.net/v4/parcels/multi"  # get
+collect_url: str = "https://api-inmobile-pl.easypack24.net/v2/collect/validate"  # post
 compartment_reopen_url: str = "https://api-inmobile-pl.easypack24.net/v1/collect/compartment/reopen"  # post
 compartment_open_url: str = "https://api-inmobile-pl.easypack24.net/v1/collect/compartment/open"  # post
 compartment_status_url: str = "https://api-inmobile-pl.easypack24.net/v1/collect/compartment/status"  # post
 terminate_collect_session_url: str = "https://api-inmobile-pl.easypack24.net/v1/collect/terminate"  # post
-shared_url: str = "https://api-inmobile-pl.easypack24.net/v1/parcels/shared"  # post
+shared_url: str = "https://api-inmobile-pl.easypack24.net/v4/parcels/shared"  # post
 
 # CREATING PARCEL #
 create_url: str = "https://api-inmobile-pl.easypack24.net/v1/parcels"
