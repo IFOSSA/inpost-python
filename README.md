@@ -6,6 +6,9 @@
 
 Fully async Inpost library using Python 3.10.
 
+# WARNING
+Please be aware, that version 0.2.x is not compatible with 0.1.x builds! Thank inpost for making their api upside down >:(
+
 
 ## Documentation
 

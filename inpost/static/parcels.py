@@ -266,7 +266,7 @@ class Parcel(BaseParcel):
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
 
     @property
-    def compartment_open_data(self) -> dict | None:
+    def compartment_open_data(self) -> dict:
         """Returns a compartment open data for :class:`Parcel`
 
         :return: dict containing compartment open data for :class:`Parcel`
@@ -275,18 +275,17 @@ class Parcel(BaseParcel):
 
         self._log.debug("getting compartment open data")
         if self.receiver is None:
-            return None
+            return {}
 
         if self.shipment_type == ParcelShipmentType.parcel:
             self._log.debug("got compartment open data")
             return {
                 "shipmentNumber": self.shipment_number,
                 "openCode": self._open_code,
-                "receiverPhoneNumber": self.receiver.phone_number,
             }
 
         self._log.warning(f"wrong ParcelShipmentType: {repr(self.shipment_type)}")
-        return None
+        return {}
 
     @property
     def mocked_location(self) -> dict | None:

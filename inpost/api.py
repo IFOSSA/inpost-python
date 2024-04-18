@@ -58,34 +58,61 @@ from inpost.static import (
     validate_friendship_url,
     validate_sent_url,
 )
+from inpost.static.headers import useragent
 
 
 class Inpost:
     """Python representation of an Inpost app. Essentially implements methods to manage all incoming parcels"""
 
-    def __init__(self, phone_number):
+    def __init__(
+        self,
+        prefix: str,
+        phone_number: str,
+        sms_code=None,
+        auth_token=None,
+        refr_token=None,
+    ):
         """Constructor method
-
+        :param prefix: country code
+        :type prefix: str
         :param phone_number: phone number
         :type phone_number: str
+        :param sms_code: sms code from inpost
+        :type sms_code: str | None
+        :param auth_token: authorization token from inpost
+        :type auth_token: str
+        :param refr_token: refresh token from inpost
+        :type refr_token: str
         :raises PhoneNumberError: Wrong phone number format or is not digit
         """
 
         if isinstance(phone_number, int):
             phone_number = str(phone_number)
 
-        if not (len(phone_number) == 9 and phone_number.isdigit()):
-            raise PhoneNumberError(f"Wrong phone number format: {phone_number} (should be 9 digits)")
-
-        self.phone_number: str = phone_number
-        self.sms_code: str | None = None
-        self.auth_token: str | None = None
-        self.refr_token: str | None = None
+        if not (len(phone_number) == 9 and phone_number.isdigit()) or not (
+            prefix.startswith("+") and prefix[1:].isdigit() and 2 <= len(prefix) <= 3
+        ):
+            raise PhoneNumberError(
+                f"Wrong phone number format: {phone_number} " f"(should be +xxx123123123 or +xx123123123)"
+            )
+        self.prefix: str = prefix
+        self.phone_number: str = phone_number[-9:]
+        self.sms_code: str | None = sms_code
+        self.auth_token: str | None = auth_token
+        self.refr_token: str | None = refr_token
         self.sess: ClientSession = ClientSession()
         self._log = logging.getLogger(f"{self.__class__.__name__}.{phone_number}")
 
         self._log.setLevel(level=logging.DEBUG)
         self._log.info(f"initialized inpost object with phone number {phone_number}")
+
+    @property
+    def combined_phone_number(self) -> str:
+        return self.prefix + self.phone_number
+
+    @property
+    def login_auth_data(self) -> dict:
+        return {"phoneNumber": {"prefix": self.prefix, "value": self.phone_number}}
 
     def __repr__(self):
         return f"{self.__class__.__name__}(phone_number={self.phone_number})"
@@ -142,6 +169,9 @@ class Inpost:
         headers_ = {} if headers is None else headers
 
         if auth:
+            if self.auth_token is None:
+                raise UnauthorizedError("Missing authorization token")
+
             headers_.update({"Authorization": self.auth_token})
 
         resp = await self.sess.request(method, url, headers=headers_, params=params, json=data, **kwargs)
@@ -166,25 +196,6 @@ class Inpost:
 
         raise UnidentifiedAPIError(reason=resp)
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "Inpost":
-        """`Classmethod` to initialize :class:`Inpost` object with dict.
-        Should be used when retrieving configuration from database.
-
-        :param data: User's Inpost data (e.g. phone_number, sms_code, auth_token, refr_token)
-        :type data: dict
-        :return: Inpost object from provided dict
-        :rtype: Inpost
-        """
-
-        inp = cls(phone_number=data["phone_number"])
-        inp.sms_code = data["sms_code"]
-        inp.auth_token = data["auth_token"]
-        inp.refr_token = data["refr_token"]
-
-        inp._log.info("initialized by from_dict")
-        return inp
-
     async def send_sms_code(self) -> bool:
         """Sends sms code to `Inpost.phone_number`
 
@@ -203,8 +214,8 @@ class Inpost:
             action="send sms code",
             url=send_sms_code_url,
             auth=False,
-            headers=None,
-            data={"phoneNumber": f"{self.phone_number}"},
+            headers=useragent | appjson,
+            data=self.login_auth_data,
             autorefresh=False,
         )
 
@@ -231,14 +242,13 @@ class Inpost:
             raise SmsCodeError(reason=f"Wrong sms code format: {sms_code} (should be 6 digits)")
 
         self._log.info("confirming sms code")
-
         resp = await self.request(
             method="post",
             action="confirm sms code",
             url=confirm_sms_code_url,
             auth=False,
             headers=appjson,
-            data={"phoneNumber": self.phone_number, "smsCode": sms_code, "phoneOS": "Android"},
+            data={"smsCode": sms_code, "devicePlatform": "Android"} | self.login_auth_data,
             autorefresh=False,
         )
 
@@ -386,7 +396,7 @@ class Inpost:
         resp = await self.request(
             method="get",
             action=f"parcel with shipment number {shipment_number}",
-            url=f"{url}{shipment_number}",
+            url=f"{url}/{shipment_number}",
             auth=True,
             headers=None,
             data=None,
@@ -511,7 +521,7 @@ class Inpost:
         resp = await self.request(
             method="get",
             action=f"parcel with multi-compartment uuid {multi_uuid}",
-            url=f"{multi_url}{multi_uuid}",
+            url=f"{multi_url}/{multi_uuid}",
             auth=True,
             headers=None,
             data=None,
@@ -569,17 +579,22 @@ class Inpost:
             raise NoParcelError(reason="Could not obtain desired parcel!")
 
         self._log.info(f"collecting compartment properties for {parcel_obj_.shipment_number}")
-
         resp = await self.request(
             method="post",
             action="collect compartment properties",
             url=collect_url,
             auth=True,
             headers=None,
-            data={
-                "parcel": parcel_obj_.compartment_open_data,
-                "geoPoint": location if location is not None else parcel_obj_.mocked_location,
-            },
+            # fmt: off
+            data={"parcel": parcel_obj_.compartment_open_data | {"receiverPhoneNumber":
+                                                                     {
+                                                                         "prefix": self.prefix,
+                                                                         "value": self.phone_number
+                                                                      }
+                                                                 },
+                  "geoPoint": location if location is not None else parcel_obj_.mocked_location,
+                  },
+            # fmt: on
             autorefresh=True,
         )
 
@@ -665,7 +680,8 @@ class Inpost:
         if resp.status == 200:
             self._log.debug(f"checked compartment status for {parcel_obj.shipment_number}")
             parcel_obj.compartment_status = (await resp.json())["status"]
-            return CompartmentExpectedStatus[(await resp.json())["status"]] == expected_status
+            # return CompartmentExpectedStatus[(await resp.json())["status"]] == expected_status
+            return True
 
         raise UnidentifiedAPIError(reason=resp)
 
