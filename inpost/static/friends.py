@@ -21,13 +21,15 @@ class Friend:
         :type logger: logging.Logger
         """
 
-        self.uuid: str = friend_data["uuid"] if "uuid" in friend_data else None
-        self.phone_number: str = friend_data["phoneNumber"]
-        self.name: str = friend_data["name"]
+        self.uuid: str | None = friend_data.get("uuid")
+        self.phone_number: str = friend_data.get("phoneNumber")
+        self.name: str = friend_data.get("name")
         self._log: logging.Logger = logger.getChild(f"{self.__class__.__name__}.{self.uuid}")
-        self.invitaion_code: str | None = friend_data["invitationCode"] if "invitationCode" in friend_data else None
-        self.created_date: Arrow | None = get(friend_data["createdDate"]) if "createdDate" in friend_data else None
-        self.expiry_date: Arrow | None = get(friend_data["expiryDate"]) if "expiryDate" in friend_data else None
+        self.invitaion_code: str | None = friend_data.get("invitationCode")
+        self.created_date: Arrow | None = (
+            get(friend_data.get("createdDate")) if friend_data.get("createdDate") else None
+        )
+        self.expiry_date: Arrow | None = get(friend_data.get("expiryDate")) if friend_data.get("expiryDate") else None
 
         if self.invitaion_code:
             self._log.debug(f"created friendship with {self.name} using from_invitation")

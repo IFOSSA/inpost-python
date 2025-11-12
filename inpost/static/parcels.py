@@ -360,16 +360,16 @@ class ReturnParcel(BaseParcel):
         """
 
         super().__init__(parcel_data, logger)
-        self.uuid: str = parcel_data["uuid"]
-        self.rma: str = parcel_data["rma"]
-        self.organization_name: str = parcel_data["organizationName"]
-        self.created_date: arrow = get(parcel_data["createdDate"])
-        self.accepted_date: arrow = get(parcel_data["acceptedDate"])
-        self.expiry_date: arrow = get(parcel_data["expiryDate"])
-        self.sent_date: arrow = get(parcel_data["sentDate"])
-        self.delivered_date: arrow = get(parcel_data["deliveredDate"])
-        self.order_number: str = parcel_data["orderNumber"]
-        self.form_type: str = parcel_data["formType"]
+        self.uuid: str = parcel_data.get("uuid")
+        self.rma: str = parcel_data.get("rma")
+        self.organization_name: str = parcel_data.get("organizationName")
+        self.created_date: arrow = get(parcel_data.get("createdDate"))
+        self.accepted_date: arrow = get(parcel_data.get("acceptedDate"))
+        self.expiry_date: arrow = get(parcel_data.get("expiryDate"))
+        self.sent_date: arrow = get(parcel_data.get("sentDate"))
+        self.delivered_date: arrow = get(parcel_data.get("deliveredDate"))
+        self.order_number: str = parcel_data.get("orderNumber")
+        self.form_type: str = parcel_data.get("formType")
 
 
 class SentParcel(BaseParcel):
@@ -392,8 +392,8 @@ class SentParcel(BaseParcel):
         """
 
         super().__init__(parcel_data, logger)
-        self.origin_system: str = parcel_data.get("originSystem", None)
-        self.quick_send_code: int = parcel_data.get("quickSendCode", None)
+        self.origin_system: str | None = parcel_data.get("originSystem", None)
+        self.quick_send_code: int | None = parcel_data.get("quickSendCode", None)
         self._qr_code: QRCode | None = (
             QRCode(qrcode_data=parcel_data["qrCode"], logger=self._log) if "qrCode" in parcel_data else None
         )
@@ -426,7 +426,7 @@ class SentParcel(BaseParcel):
         self.payment: Payment | None = (
             Payment(payment_details=parcel_data["payment"], logger=self._log) if "payment" in parcel_data else None
         )
-        self.unlabeled: bool = parcel_data.get("unlabeled", None)
+        self.unlabeled: bool | None = parcel_data.get("unlabeled", None)
         self.is_end_off_week_collection: bool | None = parcel_data.get("endOfWeekCollection", None)
         self.status: ParcelStatus | None = ParcelStatus[parcel_data.get("status")]
         self._compartment_properties: CompartmentProperties | None = None
@@ -578,9 +578,10 @@ class Receiver:
         :type logger: logging.Logger
         """
 
-        self.email: str = receiver_data["email"]
-        self.phone_number: str = receiver_data["phoneNumber"]
-        self.name: str = receiver_data["name"]
+        self.email: str | None = receiver_data.get("email")
+        self.phone_number: str | None = receiver_data.get("phoneNumber")
+        self.name: str | None = receiver_data.get("name")
+
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
 
         self._log.debug("created")
@@ -608,8 +609,8 @@ class Sender:
         :type logger: logging.Logger
         """
 
-        self.sender_name: str = sender_data.get("name", None)
-        self.sender_email: str = sender_data.get("email", None)
+        self.sender_name: str | None = sender_data.get("name", None)
+        self.sender_email: str | None = sender_data.get("email", None)
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
 
         self._log.debug("created")
@@ -619,7 +620,7 @@ class Sender:
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("'", "")
 
     def __str__(self) -> str:
-        return self.sender_name
+        return self.sender_name or ""
 
 
 class Point:
@@ -641,37 +642,51 @@ class Point:
         """
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
-        self.name: str = point_data["name"]
-        self.latitude: float = point_data["location"]["latitude"]
-        self.longitude: float = point_data["location"]["longitude"]
-        self.description: str = point_data["locationDescription"]
-        self.opening_hours: str = point_data["openingHours"]
-        self.post_code: str = point_data["addressDetails"]["postCode"]
-        self.city: str = point_data["addressDetails"]["city"]
-        self.province: str = point_data["addressDetails"]["province"]
-        self.street: str = point_data["addressDetails"]["street"]
-        self.building_number: str = point_data["addressDetails"]["buildingNumber"]
+
+        self.name: str | None = point_data.get("name")
+        self.latitude: float = point_data.get("location", {}).get("latitude")
+        self.longitude: float = point_data.get("location", {}).get("longitude")
+        self.description: str | None = point_data.get("locationDescription")
+        self.opening_hours: str | None = point_data.get("openingHours")
+        self.post_code: str | None = point_data.get("addressDetails", {}).get("postCode")
+        self.city: str | None = point_data.get("addressDetails", {}).get("city")
+        self.province: str | None = point_data.get("addressDetails", {}).get("province")
+        self.street: str | None = point_data.get("addressDetails", {}).get("street")
+        self.building_number: str | None = point_data.get("addressDetails", {}).get("buildingNumber")
+
         self.payment_type: List[PaymentType] | None = (
-            [PaymentType[pt] for pt in point_data["paymentType"]] if "paymentType" in point_data else None
+            [PaymentType[pt] for pt in point_data.get("paymentType", []) if pt in PaymentType.__members__]
+            if point_data.get("paymentType")
+            else None
         )
-        self.virtual: int = point_data["virtual"]
-        self.point_type: PointType | None = PointType[point_data.get("pointType")]
-        self.type: List[ParcelDeliveryType] = (
-            [ParcelDeliveryType[data] for data in point_data["type"]] if "type" in point_data else None
+
+        self.virtual: int | None = point_data.get("virtual")
+        self.point_type: PointType | None = (
+            PointType[point_data["pointType"]] if point_data.get("pointType") in PointType.__members__ else None
         )
-        self.location_round_the_clock: bool = point_data["location247"]
-        self.doubled: bool = point_data["doubled"]
-        self.image_url: str = point_data["imageUrl"]
-        self.easy_access_zone: bool = point_data["easyAccessZone"]
-        self.air_sensor: bool = point_data["airSensor"]
+
+        self.type: List[ParcelDeliveryType] | None = (
+            [ParcelDeliveryType[data] for data in point_data.get("type", []) if data in ParcelDeliveryType.__members__]
+            if point_data.get("type")
+            else None
+        )
+
+        self.location_round_the_clock: bool = point_data.get("location247", False)
+        self.doubled: bool = point_data.get("doubled", False)
+        self.image_url: str | None = point_data.get("imageUrl")
+        self.easy_access_zone: bool = point_data.get("easyAccessZone", False)
+        self.air_sensor: bool = point_data.get("airSensor", False)
         self.air_sensor_data: AirSensorData | None = (
-            AirSensorData(point_data["airSensorData"], self._log) if "airSensorData" in point_data else None
+            AirSensorData(point_data["airSensorData"], self._log)
+            if isinstance(point_data.get("airSensorData"), dict)
+            else None
         )
-        self.remote_send: bool = point_data.get("remoteSend", None)
-        self.remote_return: bool = point_data.get("remoteReturn", None)
+
+        self.remote_send: bool | None = point_data.get("remoteSend")
+        self.remote_return: bool | None = point_data.get("remoteReturn")
 
         self._log.debug("created")
-        if ParcelDeliveryType.UNKNOWN in self.type:
+        if self.type and ParcelDeliveryType.UNKNOWN in self.type:
             self._log.warning(f'unknown delivery type: {point_data["type"]}')
 
     def __repr__(self):
@@ -679,10 +694,10 @@ class Point:
         return self.__class__.__name__ + str(tuple(sorted(fields))).replace("'", "")
 
     def __str__(self) -> str:
-        return self.name
+        return self.name or ""
 
     @property
-    def location(self) -> Tuple[float, float]:
+    def location(self) -> Tuple[float | None, float | None]:
         """Returns a mocked location for :class:`Point`
 
         :return: tuple containing location for :class:`Point`
@@ -755,11 +770,11 @@ class DeliveryPoint:
 
         self.name = delivery_point.get("name")
         self.company_name = delivery_point.get("companyName")
-        self.post_code = delivery_point["address"]["postCode"] if "address" in delivery_point else None
-        self.city = delivery_point["address"]["city"] if "address" in delivery_point else None
-        self.street = delivery_point["address"]["street"] if "address" in delivery_point else None
-        self.building_number = delivery_point["address"]["buildingNumber"] if "address" in delivery_point else None
-        self.flat_numer = delivery_point["address"]["flatNumber"] if "address" in delivery_point else None
+        self.post_code = delivery_point.get("address", {}).get("postCode")
+        self.city = delivery_point.get("address", {}).get("city")
+        self.street = delivery_point.get("address", {}).get("street")
+        self.building_number = delivery_point.get("address", {}).get("buildingNumber")
+        self.flat_numer = delivery_point.get("address", {}).get("flatNumber")
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
@@ -819,12 +834,10 @@ class MultiCompartment:
         :type logger: logging.Logger
         """
 
-        self.uuid = multicompartment_data["uuid"]
-        self.shipment_numbers: List[str] | None = (
-            multicompartment_data["shipmentNumbers"] if "shipmentNumbers" in multicompartment_data else None
-        )
-        self.presentation: bool = multicompartment_data["presentation"]
-        self.collected: bool = multicompartment_data["collected"]
+        self.uuid = multicompartment_data.get("uuid")
+        self.shipment_numbers: List[str] | None = multicompartment_data.get("shipmentNumbers")
+        self.presentation: bool = multicompartment_data.get("presentation")
+        self.collected: bool = multicompartment_data.get("collected")
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
@@ -856,18 +869,18 @@ class Operations:
         self.auto_archivable_since: arrow | None = (
             get(operations_data["autoArchivableSince"]) if "autoArchivableSince" in operations_data else None
         )
-        self.delete: bool = operations_data.get("delete", None)
-        self.pay_to_send: bool = operations_data.get("payToSend", None)
-        self.collect: bool = operations_data.get("collect", None)
-        self.expand_avizo: bool = operations_data.get("expandAvizo", None)
-        self.highlight: bool = operations_data.get("highlight", None)
+        self.delete: bool | None = operations_data.get("delete")
+        self.pay_to_send: bool | None = operations_data.get("payToSend")
+        self.collect: bool | None = operations_data.get("collect")
+        self.expand_avizo: bool | None = operations_data.get("expandAvizo")
+        self.highlight: bool | None = operations_data.get("highlight")
         self.refresh_until: arrow = get(operations_data["refreshUntil"]) if "refreshUntil" in operations_data else None
-        self.request_easy_access_zone: str = operations_data.get("requestEasyAccessZone", None)
-        self.is_voicebot: bool = operations_data.get("voicebot", None)
-        self.can_share_to_observe: bool = operations_data.get("canShareToObserve", None)
-        self.can_share_open_code: bool = operations_data.get("canShareOpenCode", None)
-        self.can_share_parcel: bool = operations_data.get("canShareParcel", None)
-        self.send: bool | None = operations_data.get("send", None)
+        self.request_easy_access_zone: str = operations_data.get("requestEasyAccessZone")
+        self.is_voicebot: bool | None = operations_data.get("voicebot")
+        self.can_share_to_observe: bool | None = operations_data.get("canShareToObserve")
+        self.can_share_open_code: bool | None = operations_data.get("canShareOpenCode")
+        self.can_share_parcel: bool | None = operations_data.get("canShareParcel")
+        self.send: bool | None = operations_data.get("send")
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
@@ -896,8 +909,8 @@ class EventLog:
         :raises UnknownStatusError: Unknown status in EventLog
         """
 
-        self.type: str = eventlog_data["type"]
-        self.date: arrow = get(eventlog_data["date"])
+        self.type: str = eventlog_data.get("type")
+        self.date: arrow = get(eventlog_data.get("date"))
         self.details: dict | None = eventlog_data.get("details")
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
 
@@ -939,9 +952,9 @@ class SharedTo:
         :type logger: logging.Logger
         """
 
-        self.uuid: str = sharedto_data["uuid"]
-        self.name: str = sharedto_data["name"]
-        self.phone_number = sharedto_data["phoneNumber"]
+        self.uuid: str = sharedto_data.get("uuid")
+        self.name: str = sharedto_data.get("name")
+        self.phone_number = sharedto_data.get("phoneNumber")
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
@@ -1019,13 +1032,13 @@ class CompartmentLocation:
         :type logger: logging.Logger
         """
 
-        self.name: str = compartmentlocation_data["compartment"]["name"]
-        self.side: str = compartmentlocation_data["compartment"]["location"]["side"]
-        self.column: str = compartmentlocation_data["compartment"]["location"]["column"]
-        self.row: str = compartmentlocation_data["compartment"]["location"]["row"]
-        self.open_compartment_waiting_time: int = compartmentlocation_data["openCompartmentWaitingTime"]
-        self.action_time: int = compartmentlocation_data["actionTime"]
-        self.confirm_action_time: int = compartmentlocation_data["confirmActionTime"]
+        self.name: str = compartmentlocation_data.get("compartment", {}).get("name")
+        self.side: str = compartmentlocation_data.get("compartment", {}).get("location", {}).get("side")
+        self.column: str = compartmentlocation_data.get("compartment", {}).get("location", {}).get("column")
+        self.row: str = compartmentlocation_data.get("compartment", {}).get("location", {}).get("row")
+        self.open_compartment_waiting_time: int = compartmentlocation_data.get("openCompartmentWaitingTime")
+        self.action_time: int = compartmentlocation_data.get("actionTime")
+        self.confirm_action_time: int = compartmentlocation_data.get("confirmActionTime")
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
@@ -1052,8 +1065,8 @@ class CompartmentProperties:
         :type logger: logging.Logger
         """
 
-        self._session_uuid: str = compartmentproperties_data["sessionUuid"]
-        self._session_expiration_time: int = compartmentproperties_data["sessionExpirationTime"]
+        self._session_uuid: str = compartmentproperties_data.get("sessionUuid")
+        self._session_expiration_time: int = compartmentproperties_data.get("sessionExpirationTime")
         self._location: CompartmentLocation | None = None
         self._status: CompartmentActualStatus | None = None
 
@@ -1136,15 +1149,15 @@ class AirSensorData:
         :type logger: logging.Logger
         """
 
-        self.updated_until: arrow = airsensor_data["updatedUntil"]
-        self.air_quality: str = airsensor_data["airQuality"]
-        self.temperature: float = airsensor_data["temperature"]
-        self.humidity: float = airsensor_data["humidity"]
-        self.pressure: float = airsensor_data["pressure"]
-        self.pm25_value: float = airsensor_data["pollutants"]["pm25"]["value"]
-        self.pm25_percent: float = airsensor_data["pollutants"]["pm25"]["percent"]
-        self.pm10_value: float = airsensor_data["pollutants"]["pm10"]["value"]
-        self.pm10_percent: float = airsensor_data["pollutants"]["pm10"]["percent"]
+        self.updated_until: arrow = airsensor_data.get("updatedUntil")
+        self.air_quality: str = airsensor_data.get("airQuality")
+        self.temperature: float = airsensor_data.get("temperature")
+        self.humidity: float = airsensor_data.get("humidity")
+        self.pressure: float = airsensor_data.get("pressure")
+        self.pm25_value: float = airsensor_data.get("pollutants", {}).get("pm25", {}).get("value")
+        self.pm25_percent: float = airsensor_data.get("pollutants", {}).get("pm25", {}).get("percent")
+        self.pm10_value: float = airsensor_data.get("pollutants", {}).get("pm10", {}).get("value")
+        self.pm10_percent: float = airsensor_data.get("pollutants", {}).get("pm10", {}).get("percent")
 
         self._log: logging.Logger = logger.getChild(self.__class__.__name__)
         self._log.debug("created")
